@@ -178,54 +178,97 @@ unsigned char PathFinding (char currentDir, char posx, char posy, char aimx, cha
 
 //决策结果
 //返回第一步
-	struct mazenode* node = &maze[aimy][aimx];
-	struct mazenode* startnode = &maze[posy][posx];
+	//struct mazenode* node = &maze[aimy][aimx];
+	//struct mazenode* startnode = &maze[posy][posx];
 	while (1){
-		if (node ->parent == 0){
-			return 255;
+		//选出未访问节点中的最高优先级加入
+		int shortest = INF_MAX;
+		for (int i = 1; i < 7; i++){
+			for (int j = 1; j < 7; j++){
+				if (maze[i][j].visited == UNVISITED && maze[i][j].priority < shortest){
+					shortest = maze[i][j].priority;
+					selectednode = &maze[i][j];
+				}
+			}
 		}
-		if (node -> parent == startnode){
-			char x = (node - &maze[0][0]) % 8;
-		    char y = (node - &maze[0][0]) / 8;
-			if (x - posx == 1){//right
-				switch (currentDir){
-				case UP:	decision = TURNRIGHT; break;
-				case LEFT:	decision = TURNBACK;  break;
-				case DOWN:	decision = TURNLEFT;  break;
-				case RIGHT:	decision = MOVEFORE;  break;
-				default: break;
-				}
-			}
-			else if (x - posx == -1){//left
-				switch (currentDir){
-				case UP:	decision = TURNLEFT;  break;
-				case LEFT:	decision = MOVEFORE;  break;
-				case DOWN:	decision = TURNRIGHT; break;
-				case RIGHT:	decision = TURNBACK;  break;
-				default: break;
-				}
-			}
-			else if (y - posy == 1){//up
-				switch (currentDir){
-				case UP:	decision = MOVEFORE;  break;
-				case LEFT:	decision = TURNRIGHT; break;
-				case DOWN:	decision = TURNBACK;  break;
-				case RIGHT:	decision = TURNLEFT;  break;
-				default: break;
-				}
-			}
-			else if (y - posy == -1){//down
-				switch (currentDir){
-				case UP:	decision = TURNBACK;  break;
-				case LEFT:	decision = TURNLEFT;  break;
-				case DOWN:	decision = MOVEFORE;  break;
-				case RIGHT:	decision = TURNRIGHT; break;
-				default: break;
-				}
-			}
-			break;
+		if (old_snode == selectednode) return 255;	//死循环return
+		selectednode -> visited = VISITED;
+		//当目标点被选中时循环终止
+		if (maze[aimy][aimx].visited == VISITED) break;
+		//对此节点的邻居优先级做更新
+		struct mazenode* rightnode = (selectednode + 1);
+		struct mazenode* leftnode  = (selectednode - 1);
+		struct mazenode* downnode  = (selectednode - 8);
+		struct mazenode* upnode    = (selectednode + 8);
+		//dirjudge
+		int selectindex = selectednode - &maze[0][0];
+		int parentindex = (selectednode -> parent) ? selectednode -> parent - &maze[0][0] : selectindex;
+		int dirjudge = selectindex - parentindex;
+		int pathweight = INF_MAX;
+		//right
+		if ((selectednode -> wall & 8) != 0) pathweight = INF_MAX;
+		else if (dirjudge == 0 || dirjudge == 1) pathweight = 1;
+		else if (dirjudge == -1) pathweight = 3;
+		else  pathweight = 2;
+		if (selectednode -> priority + pathweight < rightnode -> priority){
+			rightnode -> priority = selectednode -> priority + pathweight;
+			rightnode -> parent = selectednode;
 		}
-		node = node->parent;
+		//left
+		if ((selectednode -> wall & 2) != 0) pathweight = INF_MAX;
+		else if (dirjudge == 0 || dirjudge == -1) pathweight = 1;
+		else if (dirjudge == 1) pathweight = 3;
+		else  pathweight = 2;
+		if (selectednode -> priority + pathweight < leftnode -> priority){
+			leftnode -> priority = selectednode -> priority + pathweight;
+			leftnode -> parent = selectednode;
+		}
+		//down
+		if ((selectednode -> wall & 4) != 0) pathweight = INF_MAX;
+		else if (dirjudge == 0 || dirjudge == -8) pathweight = 1;
+		else if (dirjudge == 8) pathweight = 3;
+		else  pathweight = 2;
+		if (selectednode -> priority + pathweight < downnode -> priority){
+			downnode -> priority = selectednode -> priority + pathweight;
+			downnode -> parent = selectednode;
+		}
+		//up
+		if ((selectednode -> wall & 1) != 0) pathweight = INF_MAX;
+		else if (dirjudge == 0 || dirjudge == 8) pathweight = 1;
+		else if (dirjudge == -8) pathweight = 3;
+		else  pathweight = 2;
+		if (selectednode -> priority + pathweight < upnode -> priority){
+			upnode -> priority = selectednode -> priority + pathweight;
+			upnode -> parent = selectednode;
+		}
+		//startpoint
+		if (dirjudge == 0){
+			switch(currentDir){
+			case UP:
+				downnode -> priority += 2;
+				rightnode -> priority += 1;
+				leftnode -> priority += 1;
+				break;
+			case DOWN:
+				upnode -> priority += 2;
+				rightnode -> priority += 1;
+				leftnode -> priority += 1;
+				break;
+			case LEFT:
+				rightnode -> priority += 2;
+				upnode -> priority += 1;
+				downnode -> priority += 1;
+				break;
+			case RIGHT:
+				leftnode -> priority += 2;
+				upnode -> priority += 1;
+				downnode -> priority += 1;
+				break;
+			default: break;
+			}
+		}
+		//判定死循环
+		old_snode = selectednode;
 	}
 	return decision;
 }
