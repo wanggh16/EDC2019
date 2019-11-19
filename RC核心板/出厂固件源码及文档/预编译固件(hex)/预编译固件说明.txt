@@ -1,0 +1,9 @@
+两个固件均具有测试、ps2手柄遥控、蓝牙遥控（串口控制）的功能
+1、后缀为MX_520333：
+	可用于520电机（333转），也适用于大部分情况，闭环模式，对应config.h里PID_EN=1, MOTOR_REVERSE=1, ENCODER_REVERSE=0
+2、后缀为370：
+	可用于370电机或者部分520电机，若使用出厂固件电机失控可以刷这个固件试试，闭环模式，对应config.h里PID_EN=1, MOTOR_REVERSE=0, ENCODER_REVERSE=0
+3、后缀为ol_X：
+	开环模式，适用于无编码器电机或者用于确定电机转向，对应config.h里PID_EN=0, MOTOR_REVERSE=1
+
+固件最后更新日期：2018-1-17
