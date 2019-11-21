@@ -47,6 +47,7 @@ void AddWall (char x, char y, char side){
 	}
 }
 
+
 //将墙壁信息全部清空
 void ClearWalls (void){
 	for (int i = 0; i < 8; i++){
@@ -66,8 +67,9 @@ void ClearWalls (void){
 	}
 }
 
+
 //参数：当前方向，xy坐标，目标位置xy坐标（范围1-6,要在原坐标基础上加1），当前位置障碍情况（0-2位分别是右，前，左侧有无障碍）
-unsigned char PathFinding (char currentDir, char posx, char posy, char aimx, char aimy, char wallrefresh){
+unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char aimy, char wallrefresh, int* pri_total){
 	unsigned char decision = 255;
 
 //起点终点重合返回ARRIVED = 0
@@ -172,6 +174,32 @@ unsigned char PathFinding (char currentDir, char posx, char posy, char aimx, cha
 			upnode -> priority = selectednode -> priority + pathweight;
 			upnode -> parent = selectednode;
 		}
+		//startpoint
+		if (dirjudge == 0){
+			switch(currentDir){
+			case UP:
+				downnode -> priority += 2;
+				rightnode -> priority += 1;
+				leftnode -> priority += 1;
+				break;
+			case DOWN:
+				upnode -> priority += 2;
+				rightnode -> priority += 1;
+				leftnode -> priority += 1;
+				break;
+			case LEFT:
+				rightnode -> priority += 2;
+				upnode -> priority += 1;
+				downnode -> priority += 1;
+				break;
+			case RIGHT:
+				leftnode -> priority += 2;
+				upnode -> priority += 1;
+				downnode -> priority += 1;
+				break;
+			default: break;
+			}
+		}
 		//判定死循环
 		old_snode = selectednode;
 	}
@@ -227,6 +255,8 @@ unsigned char PathFinding (char currentDir, char posx, char posy, char aimx, cha
 		}
 		node = node->parent;
 	}
+	
+	*pri_total = maze[aimy][aimx].priority;
 	return decision;
 }
 
@@ -236,8 +266,17 @@ unsigned char PathFinding (char currentDir, char posx, char posy, char aimx, cha
 /*********************************************************************************/
 /*********************************************************************************/
 
-unsigned char PersonFinding (char currentDir, char posx, char posy, char p1bx, char p1by, char p2bx, char p2by, char wallrefresh){
-	unsigned char decision = 255;
-
+unsigned char PathFinding(char currentDir, char posx, char posy, char aimx, char aimy, char wallrefresh){
+	int pri = 0;
+	unsigned char decision = MakePath(currentDir,posx,posy,aimx,aimy,wallrefresh,&pri);
 	return decision;
+}
+
+unsigned char PersonFinding (char currentDir, char posx, char posy, char p1bx, char p1by, char p2bx, char p2by, char wallrefresh){
+	unsigned char decision1 = 255, decision2 = 255;
+	int pri_1 = INF_MAX, pri_2 = INF_MAX;
+	decision1 = MakePath(currentDir,posx,posy,p1bx,p1by,wallrefresh,&pri_1);
+	decision2 = MakePath(currentDir,posx,posy,p2bx,p2by,wallrefresh,&pri_2);
+
+	return (pri_1 < pri_2) ? decision1 : decision2;
 }
