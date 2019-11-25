@@ -14,7 +14,7 @@
 #define BAT_TH 2100//for7.4v//7v=3.5v*2=1.75v*4 1.75/3.3*4095
 
 //Çø·ÖAB³µ
-#define IamcarA 1
+#define IamcarA 0
 
 #define BALLMODE 0
 

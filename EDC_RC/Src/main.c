@@ -213,10 +213,10 @@ int main(void)
 	Motor_PID_Enable(&common_mt_ctrl,motors,1.2, 0.15, 0);
 	#endif
 	
-	OLED_Init();
-	OLED_Clear();
-	OLED_ShowString(0,0,(uint8_t *)"lyhnb",8);
-	uDelay(1);
+	//OLED_Init();
+	//OLED_Clear();
+	//OLED_ShowString(0,0,(uint8_t *)"lyhnb",8);
+	//uDelay(1);
 	
 	user_Servo_Init();
 	Set_Servo(3,600);
@@ -229,7 +229,6 @@ int main(void)
 	#define UP_ALIGNBALL 3
 	#define UP_CATCHBALL 4
 	#define CV_FORWARD 11
-	#define CV_PASSBY 12
 	#define CV_STOPSOON 13
 	#define CV_TURNLEFT 14
 	#define CV_TURNRIGHT 15
@@ -252,17 +251,17 @@ int main(void)
 	#define IR_FRONT GPIO_PIN_14
 	
 	//迷宫内行进速度、比例系数、90度转向实际大小
-	#define SPEED_FORWARD 600
-	#define SPEED_TURN 500
-	#define KP_X 4
+	#define SPEED_FORWARD 900
+	#define SPEED_TURN 800
+	#define KP_X 8
 	#define KP_R 8
-	#define TURN_STOP_YAW 800
+	#define TURN_STOP_YAW 740
 	
 	//外面没有动态规划，可以写死
 	#if BALLMODE == 1
-	uint16_t target_list [20][2] = {{48, 23}, {48, 42}, {22, 56}, {23, 248}, {16, 258}, {22, 190}, {34, 190}, {224, 42}, {224, 22}, {48, 22}, {24, 22}, {15, 22}};
+	uint16_t target_list [20][2] = {{44, 23}, {44, 42}, {22, 56}, {23, 248}, {16, 258}, {22, 195}, {39, 195}, {224, 42}, {224, 22}, {48, 22}, {24, 22}, {15, 22}};
 	#else
-	uint16_t target_list [20][2] = {{}};
+	uint16_t target_list [20][2] = {{257, 233},{240, 233},{227, 258},{88, 258},{88, 240}};
 	#endif
 	//正走还是倒车
 	char reverse = 0;
@@ -283,10 +282,12 @@ int main(void)
 	int16_t tempyaw = 0;
 	
 	//连续看到横线次数
-	uint8_t continous = 0;
+	char continous = 0;
 	
 	//出迷宫
 	char arrived = 0;
+	
+	char goin = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -303,9 +304,10 @@ int main(void)
 		
 		if(HAL_GetTick() >= time_print)
 		{
-			//printf("TX:%d,TY:%d",TARGETX,TARGETY);
-			printf("X:%d,Y:%d\n",info.X,info.Y);
-			//printf("bigX:%d,bigY:%d\n",big_x,big_y);
+			//printf("1X:%d,1Y:%d\n",info.P1BX,info.P1BY);
+			//printf("2X:%d,2Y:%d\n",info.P2BX,info.P2BY);
+			//printf("X:%d,Y:%d\n",info.X,info.Y);
+			printf("bigX:%d,bigY:%d\n",big_x,big_y);
 			//printf("state:%d\n",state);
 			//printf("a:%d\n",info.cvangle);
 			//printf("y:%d\n",info.cvypos);
@@ -320,7 +322,12 @@ int main(void)
 			{
 				//初始状态
 				case IDLE:
+					#if BALLMODE == 1
 					inityaw = info.yaw;
+					#else
+					inityaw = info.yaw + 900;
+					if (inityaw > 1800) inityaw -= 3600;
+					#endif
 					state = UP_TURN;
 					TARGETX = target_list[stage][0];
 					TARGETY = target_list[stage][1];
@@ -333,9 +340,9 @@ int main(void)
 					dst = getdist(info.X, info.Y, TARGETX, TARGETY);
 					speed_xyr.x = 0;
 					speed_xyr.y = 0;
-					if (dy > 500) speed_xyr.r = 500;
-					else if (dy < -500) speed_xyr.r = -500;
-					else if (dy > 80 || dy < -80) speed_xyr.r = dy;
+					if (dy > 400) speed_xyr.r = 800;
+					else if (dy < -400) speed_xyr.r = -800;
+					else if (dy > 60 || dy < -60) speed_xyr.r = 2*dy;
 					else state = UP_FORWARD;
 				break;
 				//前往下一点
@@ -344,22 +351,26 @@ int main(void)
 					dy = diffyaw(tempyaw, info.yaw);
 					if (reverse) dy = diffyaw(1800, dy);
 					dst = getdist(info.X, info.Y, TARGETX, TARGETY);
-					if (dst > 30)
+					if (dst > 30 && dy < 600 && dy > -600)
 					{
-						speed_xyr.x = 0;//300*tan(dy/572.96);
-						speed_xyr.y = 750;
-						speed_xyr.r = dy/2;
+						speed_xyr.x = 900*sin(dy/572.96);
+						speed_xyr.y = 900*cos(dy/572.96);
+						speed_xyr.r = 0;
+					}
+					else if (dst > 30)
+					{
+						state = UP_TURN;
 					}
 					else if (dst > 10)
 					{
-						speed_xyr.x = 20*dst*sin(dy/572.96);
-						speed_xyr.y = 20*dst;
-						speed_xyr.r = dy/2;
+						speed_xyr.x = 30*dst*sin(dy/572.96);
+						speed_xyr.y = 30*dst*cos(dy/572.96);
+						speed_xyr.r = 0;
 					}
 					else if (dst > 4)
 					{
-						speed_xyr.x = 20*dst*sin(dy/572.96);
-						speed_xyr.y = 20*dst*cos(dy/572.96);
+						speed_xyr.x = 30*dst*sin(dy/572.96);
+						speed_xyr.y = 30*dst*cos(dy/572.96);
 						speed_xyr.r = 0;
 					}
 					else
@@ -369,7 +380,7 @@ int main(void)
 						if (stage > 19) {stage = 0;move_en = 0;}
 						//倒车去小球位置，放钓鱼竿
 						//if (TARGETX==10 && TARGETY==194)
-						if (TARGETX==48 && TARGETY==42)
+						if (TARGETX==44 && TARGETY==42)
 						{
 							reverse = 1;
 						}
@@ -384,12 +395,22 @@ int main(void)
 							Set_Servo(4,1600);
 						}
 						//进迷宫
-						else if (TARGETX==34 && TARGETY==190)
+						else if (TARGETX==39 && TARGETY==195)
 						{
 							state = CV_FORWARD;
 							dir = RIGHT;
 							big_x = -1;
 							big_y = 4;
+							goin = 1;
+							ClearWalls();
+						}
+						else if (TARGETX==88 && TARGETY==240)
+						{
+							state = CV_FORWARD;
+							dir = DOWN;
+							big_x = 1;
+							big_y = 6;
+							goin = 1;
 							ClearWalls();
 						}
 						else if (TARGETX==224 && TARGETY==22)
@@ -412,7 +433,7 @@ int main(void)
 				break;
 				//正常视觉巡线
 				case CV_FORWARD:
-					if (!(info.cvstate&0x01) && 55 < info.cvxpos && info.cvxpos < 105) speed_xyr.y = SPEED_FORWARD;
+					if (!(info.cvstate&0x01) && 60 < info.cvxpos && info.cvxpos < 100) speed_xyr.y = SPEED_FORWARD;
 					else speed_xyr.y = 0;
 					if (!(info.cvstate&0x01) && 45 < info.cvangle && info.cvangle < 135)
 					{
@@ -426,7 +447,7 @@ int main(void)
 					}
 					if (info.cvstate&0x02) continous++;
 					else continous = 0;
-					if (continous > 1)
+					if (continous > 2)
 					{
 						if (dir==UP) big_y++;
 						else if (dir==LEFT) big_x--;
@@ -439,11 +460,20 @@ int main(void)
 				//看到交叉点，决定下一步怎么走
 				case CV_STOPSOON:
 					speed_xyr.y = SPEED_FORWARD;
-					speed_xyr.x = 0;
-					speed_xyr.r = 0;
-					continous ++;
-					if (continous > 7)
+					if (!(info.cvstate&0x01) && 45 < info.cvangle && info.cvangle < 135)
 					{
+						speed_xyr.x = KP_X*(info.cvxpos - 80);
+						speed_xyr.r = -KP_R*(info.cvangle - 90);
+					}
+					else
+					{
+						speed_xyr.x = 0;
+						speed_xyr.r = 0;
+					}
+					continous ++;
+					if (continous > 1 + goin)
+					{
+						goin = 0;
 						speed_xyr.x = 0;
 						speed_xyr.y = 0;
 						speed_xyr.r = 0;
@@ -459,7 +489,7 @@ int main(void)
 						#if BALLMODE == 1
 						uint8_t decision = PathFinding(dir,big_x + 1,big_y + 1,5,1,wallrefresh);
 						#else
-						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX,info.P1BY,info.P2BX,info.P2BY,wallrefresh);
+						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
 						#endif
 						
 						printf("%d\n", decision);
@@ -477,65 +507,9 @@ int main(void)
 							break;
 							default:
 								state = decision;
-								continous=0;
+								continous = 0;
 							break;
 						}
-						
-						/*
-						if (big_x == 4 && big_y == 4)
-						{
-							state = CV_TURNRIGHT;
-							continous=0;
-						}
-						else if (big_x == 4 && big_y == 0)
-						{
-							state = BLIND_FORWARD;
-							continous=0;
-						}
-						else
-						{
-							state = CV_PASSBY;
-							continous=2;
-						}
-						
-						if (HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B))
-						{
-							state = CV_TURNLEFT;
-							continous=0;
-						}
-						else if (HAL_GPIO_ReadPin(GPIOC,IR_FRONT))
-						{
-							state = CV_PASSBY;
-							continous=2;
-						}
-						else
-						{
-							state = CV_TURNRIGHT;
-							continous=0;
-						}
-						*/
-					}
-				break;
-				//直走经过交叉点
-				case CV_PASSBY:
-					speed_xyr.y = SPEED_FORWARD;
-					if (!(info.cvstate&0x01) && 45 < info.cvangle && info.cvangle < 135)
-					{
-						speed_xyr.x = KP_X*(info.cvxpos - 80);
-						speed_xyr.r = -KP_R*(info.cvangle - 90);
-					}
-					else
-					{
-						speed_xyr.x = 0;
-						speed_xyr.r = 0;
-					}
-					if (info.cvstate&0x02) continous=2;
-					else continous --;
-					if (continous < 1)
-					{
-						if (arrived) {continous=0;state = BLIND_FORWARD;}
-						else state = CV_FORWARD;
-						continous = 0;
 					}
 				break;
 				//左转
@@ -545,7 +519,8 @@ int main(void)
 					{
 						speed_xyr.r = 0;
 						dir++;
-						if (arrived) {continous=0;state = BLIND_FORWARD;}
+						continous=0;
+						if (arrived) state = BLIND_FORWARD;
 						else state = CV_FORWARD;
 					}
 				break;
@@ -556,7 +531,8 @@ int main(void)
 					{
 						speed_xyr.r = 0;
 						dir--;
-						if (arrived) {continous=0;state = BLIND_FORWARD;}
+						continous=0;
+						if (arrived) state = BLIND_FORWARD;
 						else state = CV_FORWARD;
 					}
 				break;
@@ -567,17 +543,26 @@ int main(void)
 					{
 						speed_xyr.r = 0;
 						dir -= 2;
-						if (arrived) {continous=0;state = BLIND_FORWARD;}
+						continous=0;
+						if (arrived) state = BLIND_FORWARD;
 						else state = CV_FORWARD;
 					}
 				break;
 				//冲出迷宫的最后一步
 				case BLIND_FORWARD:
-					speed_xyr.x = 0;
-					speed_xyr.y = 600;
-					speed_xyr.r = 0;
+					speed_xyr.y = SPEED_FORWARD;
+					if (!(info.cvstate&0x01) && 45 < info.cvangle && info.cvangle < 135)
+					{
+						speed_xyr.x = KP_X*(info.cvxpos - 79.5);
+						speed_xyr.r = -KP_R*(info.cvangle - 90);
+					}
+					else
+					{
+						speed_xyr.x = 0;
+						speed_xyr.r = 0;
+					}
 					continous++;
-					if (continous > 14)
+					if (continous > 11)
 					{
 						state = UP_TURN;
 						continous = 0;
@@ -590,7 +575,7 @@ int main(void)
 			if (dir > 4) dir -= 4;
 			else if (dir < 1) dir += 4;
 		}
-		if(!move_en || (HAL_GetTick() - newtime > 80))
+		if(!move_en || (HAL_GetTick() - newtime > 50))
 		{
 			speed_xyr.cal_speed = 1;
 			speed_xyr.x = 0;

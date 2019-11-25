@@ -29,4 +29,5 @@ typedef struct{
 
 void BT_task(mt_ctrltype *ctrl,pidtype *mt,speed3axistype *speed);
 void data_task(gameinfo *info);
+char smalltobig(int16_t x, int16_t lower, int16_t upper);
 #endif

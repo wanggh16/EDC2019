@@ -20,6 +20,14 @@ extern char state;
 uint8_t wrong = 0;
 extern int16_t inityaw;
 
+char smalltobig(int16_t x, int16_t lower, int16_t upper)
+{
+	int8_t xinblock = ((float)(x-lower)*5)/((float)(upper-lower)) + 0.5;
+	if (xinblock < 0) xinblock = 0;
+	if (xinblock > 5) xinblock = 5;
+	return xinblock;
+}
+
 void BT_task(mt_ctrltype *ctrl,pidtype *mt,speed3axistype *speed)
 {
 	/*state mechime : 
@@ -182,15 +190,15 @@ void data_task(gameinfo *info)
 						wrong++;
 						info->X = oldX;
 						info->Y = oldY;
-						if (wrong > 5) info->renewed = 0;
+						if (wrong > 3) info->renewed = 0;
 					}
 					else wrong = 0;
 				}
 				//转换格点坐标
-				info->P1BX = 0;
-				info->P1BY = 0;
-				info->P2BX = 0;
-				info->P2BY = 0;
+				info->P1BX = smalltobig(info->P1X, 56, 206);
+				info->P1BY = smalltobig(info->P1Y, 72, 222);
+				info->P2BX = smalltobig(info->P2X, 56, 206);
+				info->P2BY = smalltobig(info->P2Y, 72, 222);
 				newtime = HAL_GetTick();
 			}
 			data_cnt = 0;
