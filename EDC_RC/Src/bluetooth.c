@@ -4,6 +4,7 @@
 #include "motor.h"
 #include "servo.h"
 #include "bluetooth.h"
+#include <stdio.h>
 
 extern UART_HandleTypeDef huart2;
 uint8_t bt_cnt = 0;

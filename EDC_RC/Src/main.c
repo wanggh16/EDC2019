@@ -56,6 +56,8 @@
 #include "config.h"
 #include "math.h"
 #include "maze_pathfinding.h"
+#include <stdio.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -103,6 +105,7 @@ int16_t inityaw = 0;
 char state = 0;
 uint8_t move_en = 0;
 uint32_t newtime = 0;
+char findline1 = 0, findline2 = 0;
 
 //uint8_t debugpid = 0;
  
@@ -172,6 +175,7 @@ int main(void)
 	
 	uint32_t time_print = 100;
   /* USER CODE END 1 */
+  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -251,7 +255,8 @@ int main(void)
 	#define IR_FRONT GPIO_PIN_14
 	
 	//迷宫内行进速度、比例系数、90度转向实际大小
-	#define SPEED_FORWARD 900
+	#define SPEED_FORWARD 800
+	#define SPEED_FORWARD_SLOW 600
 	#define SPEED_TURN 800
 	#define KP_X 8
 	#define KP_R 8
@@ -259,7 +264,7 @@ int main(void)
 	
 	//外面没有动态规划，可以写死
 	#if BALLMODE == 1
-	uint16_t target_list [20][2] = {{44, 23}, {44, 42}, {22, 56}, {23, 248}, {16, 258}, {22, 195}, {39, 195}, {224, 42}, {224, 22}, {48, 22}, {24, 22}, {15, 22}};
+	uint16_t target_list [20][2] = {{44, 23}, {44, 42}, {22, 56}, {23, 248}, {16, 258}, {22, 192}, {39, 192}, {224, 42}, {224, 17}, {48, 17}, {24, 17}, {15, 17}};
 	#else
 	uint16_t target_list [20][2] = {{257, 233},{240, 233},{227, 258},{88, 258},{88, 240}};
 	#endif
@@ -308,7 +313,8 @@ int main(void)
 			//printf("2X:%d,2Y:%d\n",info.P2BX,info.P2BY);
 			//printf("X:%d,Y:%d\n",info.X,info.Y);
 			printf("bigX:%d,bigY:%d\n",big_x,big_y);
-			//printf("state:%d\n",state);
+			//printf("yaw:%d\n",info.yaw);
+			printf("state:%d\n",state);
 			//printf("a:%d\n",info.cvangle);
 			//printf("y:%d\n",info.cvypos);
 			time_print = HAL_GetTick() + PRINT_PERIOD;
@@ -395,7 +401,7 @@ int main(void)
 							Set_Servo(4,1600);
 						}
 						//进迷宫
-						else if (TARGETX==39 && TARGETY==195)
+						else if (TARGETX==39 && TARGETY==192)
 						{
 							state = CV_FORWARD;
 							dir = RIGHT;
@@ -413,11 +419,11 @@ int main(void)
 							goin = 1;
 							ClearWalls();
 						}
-						else if (TARGETX==224 && TARGETY==22)
+						else if (TARGETX==224 && TARGETY==17)
 						{
 							reverse = 1;
 						}
-						else if (TARGETX==24 && TARGETY==22)
+						else if (TARGETX==24 && TARGETY==17)
 						{
 							Set_Servo(4,1000);
 							Set_Servo(3,2400);
@@ -447,7 +453,7 @@ int main(void)
 					}
 					if (info.cvstate&0x02) continous++;
 					else continous = 0;
-					if (continous > 2)
+					if (continous > 1)
 					{
 						if (dir==UP) big_y++;
 						else if (dir==LEFT) big_x--;
@@ -455,11 +461,13 @@ int main(void)
 						else if (dir==RIGHT) big_x++;
 						state = CV_STOPSOON;
 						continous = 0;
+						//findline1 = 0;
+						//findline2 = 0;
 					}
 				break;
 				//看到交叉点，决定下一步怎么走
 				case CV_STOPSOON:
-					speed_xyr.y = SPEED_FORWARD;
+					speed_xyr.y = SPEED_FORWARD_SLOW;
 					if (!(info.cvstate&0x01) && 45 < info.cvangle && info.cvangle < 135)
 					{
 						speed_xyr.x = KP_X*(info.cvxpos - 80);
@@ -471,17 +479,22 @@ int main(void)
 						speed_xyr.r = 0;
 					}
 					continous ++;
-					if (continous > 1 + goin)
+					//if (continous > 1 + goin)
+					if (findline1 == 1 && findline2 == 1)
 					{
 						goin = 0;
+						findline1 = 0;
+						findline2 = 0;
 						speed_xyr.x = 0;
 						speed_xyr.y = 0;
 						speed_xyr.r = 0;
 						tempyaw = info.yaw;
 						
 						//迷宫寻路
-						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B) && HAL_GPIO_ReadPin(GPIOC,IR_LEFT_F));
-						char rightblock = !(HAL_GPIO_ReadPin(GPIOC,IR_RIGHT_B) && HAL_GPIO_ReadPin(GPIOC,IR_RIGHT_F));
+						//char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B) && HAL_GPIO_ReadPin(GPIOC,IR_LEFT_F));
+						//char rightblock = !(HAL_GPIO_ReadPin(GPIOC,IR_RIGHT_B) && HAL_GPIO_ReadPin(GPIOC,IR_RIGHT_F));
+						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
+						char rightblock = !(HAL_GPIO_ReadPin(GPIOC,IR_RIGHT_B));
 						char frontblock = !HAL_GPIO_ReadPin(GPIOC,IR_FRONT);
 						printf("%d%d%d\n", leftblock, rightblock, frontblock);
 						char wallrefresh = (leftblock << 2) + (frontblock << 1) + rightblock;
@@ -493,6 +506,11 @@ int main(void)
 						#endif
 						
 						printf("%d\n", decision);
+						if (decision == 255)
+						{
+							ClearWalls();
+							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
+						}
 						switch(decision){
 							case 0://arrived
 								if (dir == RIGHT)
@@ -500,10 +518,6 @@ int main(void)
 									state = CV_TURNRIGHT;
 									arrived = 1;
 								}
-							break;
-							case 255://fail
-								ClearWalls();
-								
 							break;
 							default:
 								state = decision;
@@ -562,7 +576,7 @@ int main(void)
 						speed_xyr.r = 0;
 					}
 					continous++;
-					if (continous > 11)
+					if (continous > 12)
 					{
 						state = UP_TURN;
 						continous = 0;
@@ -1157,6 +1171,7 @@ static void MX_USART3_UART_Init(void)
   */
 static void MX_DMA_Init(void) 
 {
+
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
 
@@ -1200,10 +1215,8 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PC13 PC14 PC3 PC4 
-                           PC5 PC12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_3|GPIO_PIN_4 
-                          |GPIO_PIN_5|GPIO_PIN_12;
+  /*Configure GPIO pins : PC13 PC14 PC5 PC12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_5|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -1213,6 +1226,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC3 PC4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PB2 */
@@ -1251,13 +1270,26 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if (state == CV_STOPSOON)
+  {
+    if (GPIO_Pin == GPIO_PIN_3) findline1 = 1;
+		if (GPIO_Pin == GPIO_PIN_4) findline2 = 1;
+  } 
+}
 /* USER CODE END 4 */
 
 /**
