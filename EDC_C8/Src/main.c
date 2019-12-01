@@ -139,7 +139,7 @@ int main(void)
 		if (HAL_GetTick() > print_time)
 		{
 			HAL_UART_Transmit_DMA(&huart1, (uint8_t *)send, sizeof(send));
-			print_time = HAL_GetTick() + 50;
+			print_time = HAL_GetTick() + 20;
 			HAL_IWDG_Refresh(&hiwdg);
 			//usart2_send(0x0f);
 		}

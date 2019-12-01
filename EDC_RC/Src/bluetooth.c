@@ -14,7 +14,7 @@ extern UART_HandleTypeDef huart3;
 uint8_t data_cnt = 0;
 uint8_t dataRxbuf[50]={0};
 
-extern uint8_t move_en;
+extern int8_t move_en;
 extern uint32_t newtime;
 extern char state;
 
@@ -59,7 +59,7 @@ void BT_task(mt_ctrltype *ctrl,pidtype *mt,speed3axistype *speed)
 				//speed->y = *(int16_t *)&btRxbuf[3];
 				//speed->x = *(int16_t *)&btRxbuf[5];
 				//speed->r = -*(int16_t *)&btRxbuf[7];
-				if (btRxbuf[2]=='m') move_en = 1;
+				if (btRxbuf[2]=='m') move_en = -1;
 				else if (btRxbuf[2]=='x') move_en = 0;
 				else if (btRxbuf[2]=='w') {speed->y = 500;speed->x = 0;speed->r = 0;}
 				else if (btRxbuf[2]=='s') {speed->y = -500;speed->x = 0;speed->r = 0;}
@@ -150,6 +150,7 @@ void data_task(gameinfo *info)
 		send[18] = info.BALLXL;
 		send[19] = info.BALLYL;
 				*/
+				info->matchstate = (dataRxbuf[8]&0xC0)==0x40?1:0;
 				info->yaw = *(int16_t *)&dataRxbuf[2];
 				info->yaw = info->yaw - inityaw;
 				if (info->yaw >= 1800) info->yaw -= 3600;

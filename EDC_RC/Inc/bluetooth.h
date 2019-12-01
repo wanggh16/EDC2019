@@ -4,6 +4,7 @@
 
 typedef struct{
 	char renewed;
+	char matchstate;
 	int16_t yaw;
 	int16_t X;
 	int16_t Y;

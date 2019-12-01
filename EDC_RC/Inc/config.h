@@ -18,4 +18,6 @@
 
 #define BALLMODE 0
 
+#define CVDEBUG 0
+
 #endif
