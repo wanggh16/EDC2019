@@ -225,19 +225,24 @@ int main(void)
 	
 	user_Servo_Init();
 	//Set_Servo(3,600);
+	#if BALLMODE==1
 	Set_Servo(4,1600);
+	#else
+	Set_Servo(4,0);
+	#endif
 	
 	//主状态机
 	#define IDLE 0
 	#define UP_FORWARD 1
 	#define UP_TURN 2
-	#define UP_ALIGNBALL 3
-	#define UP_CATCHBALL 4
 	#define CV_FORWARD 11
 	#define CV_STOPSOON 13
 	#define CV_TURNLEFT 14
 	#define CV_TURNRIGHT 15
 	#define CV_TURNBACK 16
+	#define CV_LEFT 17
+	#define CV_RIGHT 18
+	#define CV_BACK 19
 	#define BLIND_FORWARD 21
 	state = IDLE;
 	
@@ -249,8 +254,11 @@ int main(void)
 	int8_t dir = UP;
 	
 	//红外传感器引脚
-	#define IR_LEFT_B GPIO_PIN_12
-	#define IR_RIGHT_B GPIO_PIN_13
+	#define IR_LEFT_F GPIO_PIN_12
+	#define IR_RIGHT_F GPIO_PIN_13
+	#define IR_LEFT_B GPIO_PIN_8
+	#define IR_RIGHT_B GPIO_PIN_10	//PORT B,NOT C!!!
+	#define IR_BACK GPIO_PIN_15
 	#define IR_FRONT GPIO_PIN_14
 	
 	//迷宫内行进速度、比例系数、90度转向实际大小
@@ -258,8 +266,12 @@ int main(void)
 	#define SPEED_FORWARD_SLOW 300
 	#define SPEED_TURN 1200
 	#define SPEED_TURN_SLOW 500
+	#define SPEED_LR 600
+	#define SPEED_LR_SLOW 300
+	#define SPEED_BACK 600
+	#define SPEED_BACK_SLOW 300
 	#define KP_X 6
-	#define KP_R 12
+	#define KP_R 8
 	#define KD_X 40
 	//#define KD_R 10
 	#define TURN_SLOW_YAW 550
@@ -294,6 +306,7 @@ int main(void)
 	
 	//连续看到横线次数
 	char continous = 0;
+	char slowdown = 0;
 	
 	//出迷宫
 	char arrived = 0;
@@ -316,13 +329,15 @@ int main(void)
 		{
 			//printf("1X:%d,1Y:%d\n",info.P1BX,info.P1BY);
 			//printf("2X:%d,2Y:%d\n",info.P2BX,info.P2BY);
-			printf("X:%d,Y:%d\n",info.X,info.Y);
-			printf("bigX:%d,bigY:%d\n",big_x,big_y);
+			//printf("X:%d,Y:%d\n",info.X,info.Y);
+			//printf("bigX:%d,bigY:%d\n",big_x,big_y);
 			//printf("yaw:%d\n",info.yaw);
 			//printf("dir:%d\n",dir);
 			//printf("state:%d\n",state);
-			//printf("a:%d\n",info.cvangle);
-			//printf("y:%d\n",info.cvypos);
+			//printf("a:%d\n",info.cvangle1);
+			printf("x:%d\n",info.cvxpos1);
+			//printf("y:%d\n",info.cvypos1);
+			printf("%d%d%d%d%d%d",HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B),HAL_GPIO_ReadPin(GPIOC,IR_LEFT_F),HAL_GPIO_ReadPin(GPIOC,IR_FRONT),HAL_GPIO_ReadPin(GPIOC,IR_RIGHT_F),HAL_GPIO_ReadPin(GPIOB,IR_RIGHT_B),HAL_GPIO_ReadPin(GPIOC,IR_BACK));
 			time_print = HAL_GetTick() + PRINT_PERIOD;
 		}
 		if (info.renewed && info.matchstate && move_en == -1) move_en = 1;
@@ -345,7 +360,7 @@ int main(void)
 					TARGETX = target_list[stage][0];
 					TARGETY = target_list[stage][1];
 					#if CVDEBUG == 1
-					state = CV_FORWARD;
+					state = CV_LEFT;
 					#endif
 				break;
 				//有上位机，转向，准备前往下一点
@@ -476,8 +491,8 @@ int main(void)
 						else if (dir==RIGHT) big_x++;
 						
 						//迷宫寻路
-						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
-						char rightblock = !(HAL_GPIO_ReadPin(GPIOC,IR_RIGHT_B));
+						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_F));
+						char rightblock = !(HAL_GPIO_ReadPin(GPIOC,IR_RIGHT_F));
 						char frontblock = !HAL_GPIO_ReadPin(GPIOC,IR_FRONT);
 						char wallrefresh = (leftblock << 2) + (frontblock << 1) + rightblock;
 						
@@ -504,6 +519,9 @@ int main(void)
 								nextstate = decision;
 							break;
 						}
+						#if CVDEBUG==1
+						nextstate = CV_LEFT;
+						#endif
 					}
 				break;
 				//看到交叉点，决定下一步怎么走
@@ -532,10 +550,6 @@ int main(void)
 						tempyaw = info.yaw;
 						state = nextstate;
 						if (nextstate == CV_FORWARD) speed_xyr.y = SPEED_FORWARD; 
-						
-						#if CVDEBUG
-						state = CV_TURNBACK;
-						#endif
 					}
 				break;
 				//左转
@@ -586,6 +600,112 @@ int main(void)
 						cvxpos_last = 80;
 					}
 				break;
+				//左平移
+				case CV_LEFT:
+					if (slowdown) speed_xyr.x = -SPEED_LR_SLOW;
+					else if (!(info.cvstate&0x04) && 55 < info.cvxpos1 && info.cvxpos1 < 105) speed_xyr.x = -SPEED_LR;
+					else speed_xyr.x = 0;
+					if (!(info.cvstate&0x04) && 45 < info.cvangle1 && info.cvangle1 < 135)
+					{
+						speed_xyr.y = -4*(info.cvxpos1 - 80);
+						speed_xyr.r = -3*(info.cvangle1 - 90);
+					}
+					else
+					{
+						speed_xyr.y = 0;
+						speed_xyr.r = 0;
+					}
+					if (!(info.cvstate&0x01) && info.cvxpos < 40)
+					{
+						slowdown = 1;
+					}
+					if (!(info.cvstate&0x01) && 40 <= info.cvxpos && slowdown)
+					{
+						slowdown = 0;
+						speed_xyr.x = 0;
+						speed_xyr.y = 0;
+						speed_xyr.r = 0;
+						if (dir==UP) big_x--;
+						else if (dir==LEFT) big_y--;
+						else if (dir==DOWN) big_x++;
+						else if (dir==RIGHT) big_y++;
+						#if CVDEBUG
+						state = CV_BACK;
+						#endif
+					}
+				break;
+				//右平移
+				case CV_RIGHT:
+					if (slowdown) speed_xyr.x = SPEED_LR_SLOW;
+					else if (!(info.cvstate&0x04) && 55 < info.cvxpos1 && info.cvxpos1 < 105) speed_xyr.x = SPEED_LR;
+					else speed_xyr.x = 0;
+					if (!(info.cvstate&0x04) && 45 < info.cvangle1 && info.cvangle1 < 135)
+					{
+						speed_xyr.y = -4*(info.cvxpos1 - 80);
+						speed_xyr.r = -3*(info.cvangle1 - 90);
+					}
+					else
+					{
+						speed_xyr.y = 0;
+						speed_xyr.r = 0;
+					}
+					if (!(info.cvstate&0x01) && info.cvxpos > 120)
+					{
+						slowdown = 1;
+					}
+					if (!(info.cvstate&0x01) && 120 >= info.cvxpos && slowdown)
+					{
+						slowdown = 0;
+						speed_xyr.x = 0;
+						speed_xyr.y = 0;
+						speed_xyr.r = 0;
+						if (dir==UP) big_x++;
+						else if (dir==LEFT) big_y++;
+						else if (dir==DOWN) big_x--;
+						else if (dir==RIGHT) big_y--;
+						#if CVDEBUG
+						state = CV_FORWARD;
+						#endif
+					}
+				break;
+				//倒车
+				case CV_BACK:
+					if (slowdown) speed_xyr.y = -SPEED_BACK_SLOW;
+					else if (!(info.cvstate&0x01) && 55 < info.cvxpos && info.cvxpos < 105) {speed_xyr.y = -SPEED_BACK;continous++;}
+					else speed_xyr.y = 0;
+					if (!(info.cvstate&0x01) && 45 < info.cvangle && info.cvangle < 135)
+					{
+						speed_xyr.x = 6*(info.cvxpos - 79.5);
+						speed_xyr.r = -4*(info.cvangle - 90);
+					}
+					else
+					{
+						speed_xyr.x = 0;
+						speed_xyr.r = 0;
+					}
+					if (!(info.cvstate&0x04) && info.cvxpos1 > 120)
+					{
+						slowdown = 1;
+					}
+					if (continous==20) {findline1=0;findline2=0;}
+					if (findline1 == 1 && findline2 == 1 && continous > 20)
+					{
+						continous = 0;
+						findline1 = 0;
+						findline2 = 0;
+						slowdown = 0;
+						speed_xyr.x = 0;
+						speed_xyr.y = 0;
+						speed_xyr.r = 0;
+						if (dir==UP) big_y--;
+						else if (dir==LEFT) big_x++;
+						else if (dir==DOWN) big_y++;
+						else if (dir==RIGHT) big_x--;
+						#if CVDEBUG
+						state = CV_RIGHT;
+						#endif
+					}
+				break;
 				//冲出迷宫的最后一步
 				case BLIND_FORWARD:
 					speed_xyr.y = SPEED_FORWARD;
@@ -620,8 +740,6 @@ int main(void)
 			speed_xyr.y = 0;
 			speed_xyr.r = 0;
 		}
-		//for comm debug
-		//if(info.AX != 0x183)move_en=0;
 		if(speed_xyr.cal_speed != 0)
 		{
 			cal_mecanum(&speed_xyr,&common_mt_ctrl,motors);
@@ -1086,14 +1204,9 @@ static void MX_TIM8_Init(void)
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
   sConfigOC.Pulse = 1500;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
   sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
-  {
-    Error_Handler();
-  }
   if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
@@ -1223,25 +1336,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PC13 PC14 PC5 PC12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_5|GPIO_PIN_12;
+  /*Configure GPIO pins : PC13 PC14 PC15 PC5 
+                           PC8 PC12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_5 
+                          |GPIO_PIN_8|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PC15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PC3 PC4 PC6 PC7 */
@@ -1253,6 +1358,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : PB2 */
   GPIO_InitStruct.Pin = GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB10 PB3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_3;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -1276,12 +1387,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_3;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
@@ -1303,7 +1408,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  if (state == CV_STOPSOON)
+  if (state == CV_STOPSOON || state == CV_BACK)
   {
     if (GPIO_Pin == GPIO_PIN_3) findline1 = 1;
 		if (GPIO_Pin == GPIO_PIN_4) findline2 = 1;

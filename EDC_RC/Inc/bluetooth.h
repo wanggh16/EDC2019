@@ -20,12 +20,13 @@ typedef struct{
 	int16_t P1Y;
 	int16_t P2X;
 	int16_t P2Y;
-	int16_t BALLX;
-	int16_t BALLY;
 	int8_t cvstate;
 	uint8_t cvxpos;
 	uint8_t cvangle;
 	uint8_t cvypos;
+	uint8_t cvxpos1;
+	uint8_t cvangle1;
+	uint8_t cvypos1;
 }gameinfo;
 
 void BT_task(mt_ctrltype *ctrl,pidtype *mt,speed3axistype *speed);

@@ -22,6 +22,11 @@ typedef struct{
 	uint8_t cvxpos;
 	uint8_t cvangle;
 	uint8_t cvypos;
+	
+	uint8_t cvstate1;
+	uint8_t cvxpos1;
+	uint8_t cvangle1;
+	uint8_t cvypos1;
 }gameinfo;
 
 unsigned short CRC16(uint8_t *puchMsg, uint32_t usDataLen);
@@ -29,6 +34,7 @@ void InvertUint8(uint8_t *dBuf,uint8_t *srcBuf);
 void InvertUint16(uint16_t *dBuf,uint16_t *srcBuf);
 
 void usart_task(void);
+void spi_task(void);
 void MY_NVIC_PriorityGroupConfig(uint8_t NVIC_Group);
 void MY_NVIC_Init(uint8_t NVIC_PreemptionPriority,uint8_t NVIC_SubPriority,uint8_t NVIC_Channel,uint8_t NVIC_Group);
 void usart2_init(uint32_t pclk2,uint32_t bound);

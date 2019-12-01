@@ -59,7 +59,13 @@ void BT_task(mt_ctrltype *ctrl,pidtype *mt,speed3axistype *speed)
 				//speed->y = *(int16_t *)&btRxbuf[3];
 				//speed->x = *(int16_t *)&btRxbuf[5];
 				//speed->r = -*(int16_t *)&btRxbuf[7];
-				if (btRxbuf[2]=='m') move_en = -1;
+				if (btRxbuf[2]=='m') {
+					#if CVDEBUG==1
+					move_en = 1;
+					#else
+					move_en = -1;
+					#endif
+				}
 				else if (btRxbuf[2]=='x') move_en = 0;
 				else if (btRxbuf[2]=='w') {speed->y = 500;speed->x = 0;speed->r = 0;}
 				else if (btRxbuf[2]=='s') {speed->y = -500;speed->x = 0;speed->r = 0;}
@@ -120,7 +126,7 @@ void data_task(gameinfo *info)
 		case 1:
 			break;
 		case 2:
-			HAL_UART_Receive_DMA(&huart3,&dataRxbuf[1],19);
+			HAL_UART_Receive_DMA(&huart3,&dataRxbuf[1],20);
 			data_cnt = 3;
 		break;
 		case 3:
@@ -128,28 +134,6 @@ void data_task(gameinfo *info)
 		case 4:
 			if (0xfe == dataRxbuf[1])
 			{
-				/*
-		send[0]=0xff;
-		send[1]=0xfe;
-		send[2]=(info.yaw)&0xff;
-		send[3]=(info.yaw)>>8;
-		send[4]=info.cvstate;
-		send[5]=info.cvxpos;
-		send[6]=info.cvangle;
-		send[7]=info.cvypos;
-		send[8] = info.mixed0;
-		send[9] = info.mixed1;
-		send[10] = info.AXL;
-		send[11] = info.AYL;
-		send[12] = info.BXL;
-		send[13] = info.BYL;
-		send[14] = info.P1XL;
-		send[15] = info.P1YL;
-		send[16] = info.P2XL;
-		send[17] = info.P2YL;
-		send[18] = info.BALLXL;
-		send[19] = info.BALLYL;
-				*/
 				info->matchstate = (dataRxbuf[8]&0xC0)==0x40?1:0;
 				info->yaw = *(int16_t *)&dataRxbuf[2];
 				info->yaw = info->yaw - inityaw;
@@ -167,8 +151,9 @@ void data_task(gameinfo *info)
 				info->P1Y = dataRxbuf[15] + (((uint16_t)dataRxbuf[9]&0x40)?0x100:0);
 				info->P2X = dataRxbuf[16] + (((uint16_t)dataRxbuf[9]&0x20)?0x100:0);
 				info->P2Y = dataRxbuf[17] + (((uint16_t)dataRxbuf[9]&0x10)?0x100:0);
-				info->BALLX = dataRxbuf[18] + (((uint16_t)dataRxbuf[9]&0x08)?0x100:0);
-				info->BALLY = dataRxbuf[19] + (((uint16_t)dataRxbuf[9]&0x04)?0x100:0);
+				info->cvxpos1 = dataRxbuf[18];
+				info->cvangle1 = dataRxbuf[19];
+				info->cvypos1 = dataRxbuf[20];
 				info->renewed = 1;
 				
 				int16_t oldX = info->X;
@@ -183,7 +168,6 @@ void data_task(gameinfo *info)
 				info->Y = 280 - info->Y;
 				info->P1Y = 280 - info->P1Y;
 				info->P2Y = 280 - info->P2Y;
-				info->BALLY = 280 - info->BALLY;
 				//防上位机坐标乱跳
 				if (state < 10)
 				{

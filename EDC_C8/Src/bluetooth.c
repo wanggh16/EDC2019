@@ -3,13 +3,66 @@
 #include "bluetooth.h"
 
 extern UART_HandleTypeDef huart1;
-
 extern UART_HandleTypeDef huart3;
+extern SPI_HandleTypeDef hspi1;
 uint8_t cv_cnt = 0;
+uint8_t cv1_cnt = 0;
 uint8_t cvRxbuf[10]={0};
+uint8_t cv1Rxbuf[10]={0};
 
 int wrong = 0;
 extern gameinfo info;
+
+void spi_task()
+{
+	switch(cv1_cnt)
+	{
+		case 0:
+			cv1Rxbuf[0] = 0;
+			HAL_SPI_Receive_DMA(&hspi1,cv1Rxbuf,1);
+			cv1_cnt = 1;
+		break;
+		case 1:
+			break;
+		case 2:
+			HAL_SPI_Receive_DMA(&hspi1,&cv1Rxbuf[1],5);
+			cv1_cnt = 3;
+		break;
+		case 3:
+		break;
+		case 4:
+			if (cv1Rxbuf[1] == 0xfe)
+			{
+				info.cvstate1 = cv1Rxbuf[2];
+				info.cvxpos1 = cv1Rxbuf[3];
+				info.cvangle1 = cv1Rxbuf[4];
+				info.cvypos1 = cv1Rxbuf[5];
+			}
+			cv1_cnt = 0;
+			break;
+		default:
+			cv1_cnt = 0;		
+	}
+}
+
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+	if(hspi == &hspi1)
+	{
+		switch(cv1_cnt)
+		{
+			case 1:
+			if(0xff == cv1Rxbuf[0])
+				cv1_cnt = 2;
+			else
+				cv1_cnt = 0;
+			break;
+			case 3:
+				cv1_cnt = 4;
+			break;
+		}
+	}
+}
 
 void usart_task()
 {
