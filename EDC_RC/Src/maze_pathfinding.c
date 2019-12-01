@@ -1,20 +1,30 @@
+//#include <stdio.h>
 #include "maze_pathfinding.h"
 
 #define INF_MAX 1000
 #define UNVISITED 0
 #define VISITED 1
+#define BALLMODE 1
+#define PERSONMODE 0
+
 #define ARRIVED 0
 #define TURNLEFT 14
 #define TURNRIGHT 15
 #define TURNBACK 16
 #define MOVEFORE 11
+
+#define DIRECTLEFT 17
+#define DIRECTRIGHT 18
+#define DIRECTBACK 19
+
+
 enum DIRECTION{//maze里的绝对方向
 	UP = 1, LEFT, DOWN, RIGHT
 };
 
 struct mazenode{
 	char wall;	//0-3位分别是上，左，下，右侧有无障碍，高位=0
-	
+
 	//路径规划中使用的变量
 	struct mazenode* parent;
 	int priority;
@@ -67,32 +77,38 @@ void ClearWalls (void){
 	}
 }
 
+void ReturnFirstStep(char currentDir, char posx, char posy, char aimx, char aimy, unsigned char* dec);
+void MakeDecision(char currentDir, char posx, char posy, char aimx, char aimy, unsigned char* dec);
 
-//参数：当前方向，xy坐标，目标位置xy坐标（范围1-6,要在原坐标基础上加1），当前位置障碍情况（0-2位分别是右，前，左侧有无障碍）
-unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char aimy, char wallrefresh, int* pri_total){
+//参数：当前方向，xy坐标，目标位置xy坐标（范围1-6,要在原坐标基础上加1），当前位置障碍情况（0-2位分别是后，右，前，左侧有无障碍）
+unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char aimy, char wallrefresh, int* pri_total, char mode){
 	unsigned char decision = 255;
 
-//起点终点重合返回ARRIVED = 0
+	//起点终点重合返回ARRIVED = 0
 	if (posx == aimx && posy == aimy) return ARRIVED;
 
-//更新墙壁信息
+	//更新墙壁信息
 	switch(currentDir){
 	case RIGHT:
+		if (wallrefresh & 8) AddWall(posx,posy,LEFT);
 		if (wallrefresh & 4) AddWall(posx,posy,UP);
 		if (wallrefresh & 2) AddWall(posx,posy,RIGHT);
 		if (wallrefresh & 1) AddWall(posx,posy,DOWN);
 		break;
 	case UP:
+		if (wallrefresh & 8) AddWall(posx,posy,DOWN);
 		if (wallrefresh & 4) AddWall(posx,posy,LEFT);
 		if (wallrefresh & 2) AddWall(posx,posy,UP);
 		if (wallrefresh & 1) AddWall(posx,posy,RIGHT);
 		break;
 	case DOWN:
+		if (wallrefresh & 8) AddWall(posx,posy,UP);
 		if (wallrefresh & 4) AddWall(posx,posy,RIGHT);
 		if (wallrefresh & 2) AddWall(posx,posy,DOWN);
 		if (wallrefresh & 1) AddWall(posx,posy,LEFT);
 		break;
 	case LEFT:
+		if (wallrefresh & 8) AddWall(posx,posy,RIGHT);
 		if (wallrefresh & 4) AddWall(posx,posy,DOWN);
 		if (wallrefresh & 2) AddWall(posx,posy,LEFT);
 		if (wallrefresh & 1) AddWall(posx,posy,UP);
@@ -100,16 +116,16 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 	default: break;
 	}
 
-//清空规划路线的中间信息
+	//清空规划路线的中间信息
 	for (int i = 0; i < 8; i++){
 		for (int j = 0; j < 8; j++){
-		    maze[i][j].parent = 0;
-		    maze[i][j].priority = INF_MAX;	//初始优先级置高
+			maze[i][j].parent = 0;
+			maze[i][j].priority = INF_MAX;	//初始优先级置高
 			maze[i][j].visited = UNVISITED;
 		}
 	}
 
-//Dijkstra规划路线
+	//Dijkstra规划路线
 	maze[posy][posx].priority = 0;
 	struct mazenode* selectednode = 0;
 	struct mazenode* old_snode = 0;
@@ -204,17 +220,55 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 		old_snode = selectednode;
 	}
 
-//决策结果
-//返回第一步
+	//决策结果
+	/*path test print
+	int path[6][6] = {0};
+	for (mazenode* node = &maze[aimy][aimx]; node != NULL; node = node->parent){
+		int x = (node - &maze[0][0]) / 8 - 1;
+		int y = (node - &maze[0][0]) % 8 - 1;
+		path[x][y] = node->priority;
+	}
+	printf("path found:\n");
+	for (int i = 5; i >= 0; i--){
+		for (int j = 0; j < 6; j++){
+			printf("%d ",path[i][j]);
+		}
+		printf("\n");
+	}
+	printf("################################\n");*/
+
+	//返回第一步
+	if (mode == BALLMODE){
+		ReturnFirstStep(currentDir,posx,posy,aimx,aimy,&decision);
+	}
+	else if (mode == PERSONMODE){
+		MakeDecision(currentDir,posx,posy,aimx,aimy,&decision);
+	}
+	else return 255;
+
+	*pri_total = maze[aimy][aimx].priority;
+
+	//printf("decision: %d\n",(int)decision);
+	return decision;
+}
+
+/*********************************************************************************/
+/*********************************************************************************/
+
+//不带平移时返回第一步
+void ReturnFirstStep(char currentDir, char posx, char posy, char aimx, char aimy, unsigned char* dec){
+	unsigned char decision;
+	//返回第一步
 	struct mazenode* node = &maze[aimy][aimx];
 	struct mazenode* startnode = &maze[posy][posx];
 	while (1){
 		if (node ->parent == 0){
-			return 255;
+			decision = 255;
+			return;
 		}
 		if (node -> parent == startnode){
 			char x = (node - &maze[0][0]) % 8;
-		    char y = (node - &maze[0][0]) / 8;
+			char y = (node - &maze[0][0]) / 8;
 			if (x - posx == 1){//right
 				switch (currentDir){
 				case UP:	decision = TURNRIGHT; break;
@@ -255,28 +309,133 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 		}
 		node = node->parent;
 	}
-	
-	*pri_total = maze[aimy][aimx].priority;
-	return decision;
+	*dec = decision;
 }
 
-/*********************************************************************************/
-/*********************************************************************************/
+//决定平移转向
+void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, unsigned char* dec){
+	unsigned char decision;
+	//还原路径
+	char pathx[21] = {0};
+	char pathy[21] = {0};
+	int total_point = 0;	//起点到终点的路径中包含的节点个数
+	for (struct mazenode* node = &maze[aimy][aimx]; node != 0; node = node->parent){
+		pathy[total_point] = (node - &maze[0][0]) / 8;
+		pathx[total_point] = (node - &maze[0][0]) % 8;
+		total_point++;
+	}
+
+	char goLEFT = TURNLEFT;
+	char goRIGHT = TURNRIGHT;
+	char goBACK = TURNBACK;
+
+	if (total_point <= 3){//目的地与起点之间距离<=2时直接平移
+		goBACK = DIRECTBACK;
+		goLEFT = DIRECTLEFT;
+		goRIGHT = DIRECTRIGHT;
+	}
+	else{
+		//找到下一个拐点
+		int turnindex = 0;
+		for (int i = total_point - 1; i >= 0; i--){
+			if (pathx[i - 2] - pathx[i - 1] != pathx[i - 1] - pathx[i] 
+			|| pathy[i - 2] - pathy[i - 1] != pathy[i - 1] - pathy[i]){
+				turnindex = i - 1;
+				break;
+			}
+		}
+		//两格内转向且下一次转向方向与现在相同时才平移
+		if (total_point - turnindex <= 3){
+			goBACK = DIRECTBACK;
+			char nextDir = 0;
+			if (pathx[total_point - 1] - pathx[total_point - 1] == 1) nextDir = RIGHT;
+			else if (pathx[turnindex - 1] - pathx[turnindex] == -1) nextDir = LEFT;
+			else if (pathy[turnindex - 1] - pathy[turnindex] == 1) nextDir = UP;
+			else if (pathy[turnindex - 1] - pathy[turnindex] == -1) nextDir = DOWN;
+
+			if (nextDir == currentDir){
+				goLEFT = DIRECTLEFT;
+				goRIGHT = DIRECTRIGHT;
+			}
+		}
+	}
+
+	if (pathx[total_point - 2] - pathx[total_point - 1] == 1){//right
+		switch (currentDir){
+		case UP:	decision = goRIGHT;		break;
+		case LEFT:	decision = goBACK;		break;
+		case DOWN:	decision = goLEFT;		break;
+		case RIGHT:	decision = MOVEFORE;	break;
+		default: break;
+		}
+	}
+	else if (pathx[total_point - 2] - pathx[total_point - 1] == -1){//left
+		switch (currentDir){
+		case UP:	decision = goLEFT;		break;
+		case LEFT:	decision = MOVEFORE;	break;
+		case DOWN:	decision = goRIGHT; 	break;
+		case RIGHT:	decision = goBACK;  	break;
+		default: break;
+		}
+	}
+	else if (pathy[total_point - 2] - pathy[total_point - 1] == 1){//up
+		switch (currentDir){
+		case UP:	decision = MOVEFORE;	break;
+		case LEFT:	decision = goRIGHT;		break;
+		case DOWN:	decision = goBACK;		break;
+		case RIGHT:	decision = goLEFT;  	break;
+		default: break;
+		}
+	}
+	else if (pathy[total_point - 2] - pathy[total_point - 1] == -1){//down
+		switch (currentDir){
+		case UP:	decision = goBACK;  	break;
+		case LEFT:	decision = goLEFT;  	break;
+		case DOWN:	decision = MOVEFORE;	break;
+		case RIGHT:	decision = goRIGHT; 	break;
+		default: break;
+		}
+	}
+	*dec = decision;
+}
+
 /*********************************************************************************/
 /*********************************************************************************/
 /*********************************************************************************/
 
 unsigned char PathFinding(char currentDir, char posx, char posy, char aimx, char aimy, char wallrefresh){
 	int pri = 0;
-	unsigned char decision = MakePath(currentDir,posx,posy,aimx,aimy,wallrefresh,&pri);
+	unsigned char decision = MakePath(currentDir,posx,posy,aimx,aimy,wallrefresh,&pri,BALLMODE);
 	return decision;
 }
 
 unsigned char PersonFinding (char currentDir, char posx, char posy, char p1bx, char p1by, char p2bx, char p2by, char wallrefresh){
 	unsigned char decision1 = 255, decision2 = 255;
 	int pri_1 = INF_MAX, pri_2 = INF_MAX;
-	decision1 = MakePath(currentDir,posx,posy,p1bx,p1by,wallrefresh,&pri_1);
-	decision2 = MakePath(currentDir,posx,posy,p2bx,p2by,wallrefresh,&pri_2);
+	decision1 = MakePath(currentDir,posx,posy,p1bx,p1by,wallrefresh,&pri_1,PERSONMODE);
+	decision2 = MakePath(currentDir,posx,posy,p2bx,p2by,wallrefresh,&pri_2,PERSONMODE);
+
+	/*printf("pri compare:%d %d ——",pri_1,pri_2);
+	if (pri_1 < pri_2) printf("1\n");
+	else printf("2\n");*/
 
 	return (pri_1 < pri_2) ? decision1 : decision2;
 }
+
+/*int main(void){
+	ClearWalls();
+
+	//AddWall(1,3,UP);
+	//PathFinding(RIGHT,1,5,5,1,0);
+	PersonFinding(DOWN,1,1,1,2,1,2,0);
+
+	//print wall conditioxxxxxxxxxxn
+	printf("wall condition:\n");
+	for (int i = 7; i >= 0; i--){
+		for (int j = 0; j < 8; j++){
+			printf("%d\t",(int)maze[i][j].wall);
+		}
+		printf("\n");
+	}
+	return 0;
+}*/
