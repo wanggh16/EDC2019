@@ -348,16 +348,16 @@ void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, 
 		//两格内转向且下一次转向方向与现在相同时才平移
 		if (total_point - turnindex <= 3){
 			goBACK = DIRECTBACK;
-			char nextDir = 0;
-			if (pathx[total_point - 1] - pathx[total_point - 1] == 1) nextDir = RIGHT;
-			else if (pathx[turnindex - 1] - pathx[turnindex] == -1) nextDir = LEFT;
-			else if (pathy[turnindex - 1] - pathy[turnindex] == 1) nextDir = UP;
-			else if (pathy[turnindex - 1] - pathy[turnindex] == -1) nextDir = DOWN;
+			//char nextDir = 0;
+			//if (pathx[turnindex - 1] - pathx[turnindex] == 1) nextDir = RIGHT;
+			//else if (pathx[turnindex - 1] - pathx[turnindex] == -1) nextDir = LEFT;
+			//else if (pathy[turnindex - 1] - pathy[turnindex] == 1) nextDir = UP;
+			//else if (pathy[turnindex - 1] - pathy[turnindex] == -1) nextDir = DOWN;
 
-			if (nextDir == currentDir){
+			//if (nextDir == currentDir){
 				goLEFT = DIRECTLEFT;
 				goRIGHT = DIRECTRIGHT;
-			}
+			//}
 		}
 	}
 	

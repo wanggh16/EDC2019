@@ -16,7 +16,7 @@
 //Çø·ÖAB³µ
 #define IamcarA 0
 
-#define BALLMODE 1
+#define BALLMODE 0
 
 #define CVDEBUG 0
 

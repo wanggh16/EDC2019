@@ -267,13 +267,13 @@ int main(void)
 	#define ir_right_b GPIO_PIN_0 //PORT B
 	
 	//迷宫内行进速度、比例系数、90度转向实际大小
-	#define SPEED_FORWARD 1200
+	#define SPEED_FORWARD 1600
 	#define SPEED_FORWARD_SLOW 250
 	#define SPEED_TURN 1200
 	#define SPEED_TURN_SLOW 500
-	#define SPEED_LR 800
+	#define SPEED_LR 1200
 	#define SPEED_LR_SLOW 250
-	#define SPEED_BACK 1000
+	#define SPEED_BACK 1400
 	#define SPEED_BACK_SLOW 250
 	#define KP_X 4                                                          
 	#define KP_R 2
@@ -343,6 +343,7 @@ int main(void)
 		data_task(&info);
 		if (HAL_GetTick() >= time_print && move_en != 1)
 		{
+			printf("mode:%d\n", BALLMODE);
 			printf("state:%d %d %d\n",info.renewed,move_en,state);
 			//printf("1X:%d,1Y:%d\n",info.P1BX,info.P1BY);
 			//printf("2X:%d,2Y:%d\n",info.P2BX,info.P2BY);
@@ -691,9 +692,9 @@ int main(void)
 					//speed_xyr.r = KP_R*info.cvangle1;
 					
 					
-					if (continous == 8) clear_fb();
+					if (continous == 11) clear_fb();
 					
-					if ((slowdown && ((find_front && find_back) || (find_right_f && find_right_b)) && continous > 7) || continous > 150)
+					if ((slowdown && ((find_front && find_back) || (find_right_f && find_right_b)) && continous > 10) || continous > 150)
 					{
 						rand = 0;
 						clear_all_irs();
@@ -728,6 +729,7 @@ int main(void)
 						state = states[statedebug];
 						statedebug++;
 						#endif
+						if (state == CV_LEFT) speed_xyr.x = -SPEED_LR;
 					}
 				break;
 				//右平移
@@ -755,9 +757,9 @@ int main(void)
 					//speed_xyr.y = KP_X*info.cvxpos1;
 					//speed_xyr.r = KP_R*info.cvangle1;
 					
-					if (continous == 8) clear_fb();
+					if (continous == 11) clear_fb();
 					
-					if ((slowdown && ((find_front && find_back) || (find_left_f && find_left_b)) && continous > 7) || continous > 150)
+					if ((slowdown && ((find_front && find_back) || (find_left_f && find_left_b)) && continous > 10) || continous > 150)
 					{
 						rand = 0;
 						clear_all_irs();
@@ -792,6 +794,7 @@ int main(void)
 						state = states[statedebug];
 						statedebug++;
 						#endif
+						if (state == CV_RIGHT) speed_xyr.x = SPEED_LR;
 					}
 				break;
 				//倒车
@@ -819,9 +822,9 @@ int main(void)
 					//speed_xyr.x = KP_X*info.cvxpos;
 					//speed_xyr.r = KP_R*info.cvangle;
 					
-					if (continous == 7) clear_lr();
+					if (continous == 10) clear_lr();
 					
-					if ((slowdown && ((find_left && find_right) || (find_left_f && find_right_f)) && continous > 6) || continous > 150)
+					if ((slowdown && ((find_left && find_right) || (find_left_f && find_right_f)) && continous > 9) || continous > 150)
 					{
 						clear_all_irs();
 						rand = 0;
@@ -856,6 +859,7 @@ int main(void)
 						state = states[statedebug];
 						statedebug++;
 						#endif
+						if (state == CV_BACK) speed_xyr.y = -SPEED_BACK;
 					}
 				break;
 				//冲出迷宫的最后一步
