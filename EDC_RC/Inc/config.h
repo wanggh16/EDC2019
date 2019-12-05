@@ -16,10 +16,10 @@
 //Çø·ÖAB³µ
 #define IamcarA 0
 
-#define BALLMODE 0
+#define BALLMODE 1
 
 #define CVDEBUG 0
 
-#define MOVEDEBUG 0
+#define BIGDEBUG 1
 
 #endif

@@ -195,22 +195,22 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 		if (dirjudge == 0){
 			switch(currentDir){
 			case UP:
-				downnode -> priority += 2;
+				downnode -> priority += 1;//2;
 				rightnode -> priority += 1;
 				leftnode -> priority += 1;
 				break;
 			case DOWN:
-				upnode -> priority += 2;
+				upnode -> priority += 1;//2;
 				rightnode -> priority += 1;
 				leftnode -> priority += 1;
 				break;
 			case LEFT:
-				rightnode -> priority += 2;
+				rightnode -> priority += 1;//2;
 				upnode -> priority += 1;
 				downnode -> priority += 1;
 				break;
 			case RIGHT:
-				leftnode -> priority += 2;
+				leftnode -> priority += 1;//2;
 				upnode -> priority += 1;
 				downnode -> priority += 1;
 				break;

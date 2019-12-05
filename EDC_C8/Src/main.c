@@ -131,8 +131,8 @@ int main(void)
 		usart_task();
 		send[0]=0xff;
 		send[1]=0xfe;
-		send[2]=(info.yaw)&0xff;
-		send[3]=(info.yaw)>>8;
+		send[2]=((uint16_t)(info.yaw + 2000))&0x7f;
+		send[3]=((uint16_t)(info.yaw + 2000))>>7;
 		send[4]=info.cvxf;
 		send[5]=info.cvxb;
 		send[6]=info.cvxl;

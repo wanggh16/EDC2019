@@ -89,7 +89,6 @@ UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart3_rx;
-DMA_HandleTypeDef hdma_usart3_tx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -277,7 +276,7 @@ int main(void)
 	#define SPEED_BACK 1000
 	#define SPEED_BACK_SLOW 250
 	#define KP_X 4                                                          
-	#define KP_R 2.5
+	#define KP_R 2
 	#define KP_X1 5                                                          
 	#define KP_R1 3
 	#define KP_YAW 2
@@ -288,10 +287,10 @@ int main(void)
 	
 	//外面没有动态规划，可以写死
 	#if BALLMODE == 1
-	uint16_t target_list [20][2] = {{44, 23}, {44, 42}, {22, 56}, {24, 244}, {18, 257}, {20, 192}, {40, 190}, {224, 42}, {224, 17}, {48, 17}, {24, 17}, {15, 17}};
+	uint16_t target_list [20][2] = {{44, 21}, {44, 40}, {22, 56}, {24, 244}, {18, 257}, {20, 192}, {40, 190}, {228, 42}, {228, 19}, {48, 18}, {24, 18}, {15, 18}};
 	#else
 	//uint16_t target_list [20][2] = {{257, 237},{240, 235},{227, 258},{93, 260},{93, 240}};
-	uint16_t target_list [20][2] = {{257, 237},{240, 235},{240, 104},{230, 102}};
+	uint16_t target_list [20][2] = {{257, 237},{238, 235},{240, 104},{230, 103}};
 	#endif
 	//正走还是倒车
 	char reverse = 0;
@@ -317,7 +316,7 @@ int main(void)
 	//uint8_t cvangle_last;
 	
 	//连续看到横线次数
-	char continous = 0;
+	unsigned char continous = 0;
 	char slowdown = 0;
 	
 	//出迷宫
@@ -342,8 +341,7 @@ int main(void)
 		//接收蓝牙和其他数据
 		BT_task(&common_mt_ctrl,motors,&speed_xyr);
 		data_task(&info);
-		
-		if(HAL_GetTick() >= time_print)
+		if (HAL_GetTick() >= time_print && move_en != 1)
 		{
 			printf("state:%d %d %d\n",info.renewed,move_en,state);
 			//printf("1X:%d,1Y:%d\n",info.P1BX,info.P1BY);
@@ -359,7 +357,7 @@ int main(void)
 			printf("%d%d%d%d%d%d%d%d\n",HAL_GPIO_ReadPin(GPIOC,ir_left),HAL_GPIO_ReadPin(GPIOC,ir_left_f),HAL_GPIO_ReadPin(GPIOB,ir_front),HAL_GPIO_ReadPin(GPIOC,ir_right_f),HAL_GPIO_ReadPin(GPIOC,ir_right),HAL_GPIO_ReadPin(GPIOB,ir_right_b),HAL_GPIO_ReadPin(GPIOB,ir_back),HAL_GPIO_ReadPin(GPIOC,ir_left_b));
 			time_print = HAL_GetTick() + PRINT_PERIOD;
 		}
-		if (info.renewed && info.matchstate) move_en = 1;
+		if (info.renewed && info.matchstate && (move_en == -1)) move_en = 1;
 		//else move_en = 0;
 		//20ms更新一次
 		if(info.renewed && move_en == 1)
@@ -401,7 +399,7 @@ int main(void)
 					dst = getdist(info.X, info.Y, TARGETX, TARGETY);
 					speed_xyr.x = 0;
 					speed_xyr.y = 0;
-					if (TARGETX == 240 && TARGETY == 235) 
+					if (TARGETX == 238 && TARGETY == 235) 
 					{
 						state = UP_FORWARD;
 						break;
@@ -443,16 +441,15 @@ int main(void)
 					{
 						state = UP_TURN;
 						stage++;
-						if (stage > 19) {stage = 0;move_en = 0;}
 						//倒车去小球位置，放钓鱼竿
 						//if (TARGETX==10 && TARGETY==194)
-						if (TARGETX==44 && TARGETY==42)
+						if (TARGETX==44 && TARGETY==40)
 						{
 							reverse = 1;
 						}
 						else if (TARGETX==22 && TARGETY==56)
 						{
-							Set_Servo(4,1600);
+							Set_Servo(4,1400);
 						}
 						//抓完球恢复正着走，收钓鱼竿
 						else if (TARGETX==18 && TARGETY==257)
@@ -479,7 +476,7 @@ int main(void)
 							ClearWalls();
 							clear_all_irs();
 						}
-						else if (TARGETX==230 && TARGETY==102)
+						else if (TARGETX==230 && TARGETY==103)
 						{
 							state = CV_FORWARD;
 							dir = LEFT;
@@ -488,15 +485,16 @@ int main(void)
 							ClearWalls();
 							clear_all_irs();
 						}
-						else if (TARGETX==224 && TARGETY==17)
+						else if (TARGETX==228 && TARGETY==19)
 						{
 							reverse = 1;
+							Set_Servo(4,1000);
 						}
-						else if (TARGETX==15 && TARGETY==17)
+						else if (TARGETX==15 && TARGETY==18)
 						{
-							Set_Servo(4,1600);
+							Set_Servo(4,1400);
 							//Set_Servo(3,2400);
-							move_en = 0;
+							move_en = -2;
 						}
 						TARGETX = target_list[stage][0];
 						TARGETY = target_list[stage][1];
@@ -511,7 +509,8 @@ int main(void)
 				case CV_FORWARD:
 					if (-50 < info.cvxpos && info.cvxpos < 50 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT)
 					{
-						speed_xyr.y = SPEED_FORWARD;continous++;
+						speed_xyr.y = SPEED_FORWARD;
+						continous++;
 						speed_xyr.x = KP_X*info.cvxpos;
 						//speed_xyr.r = KP_R*info.cvangle + KD_YAW*yaw_diff;
 						speed_xyr.r = KP_YAW*yaw_err + KD_YAW*yaw_diff;
@@ -527,7 +526,7 @@ int main(void)
 					//speed_xyr.r = KP_R*info.cvangle;
 					
 					if (continous == 6) clear_lr();
-					if (find_left_f && find_right_f && continous > 5)
+					if ((find_left_f && find_right_f && continous > 5) || continous > 100)
 					{
 						continous = 0;
 						clear_all_irs_except_lr();
@@ -537,6 +536,9 @@ int main(void)
 						else if (dir==LEFT) big_x--;
 						else if (dir==DOWN) big_y--;
 						else if (dir==RIGHT) big_x++;
+						#if BIGDEBUG == 1
+						printf("bigX:%d,bigY:%d\n",big_x,big_y);
+						#endif
 						
 						//迷宫寻路
 						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_F));
@@ -571,14 +573,18 @@ int main(void)
 						nextstate = states[statedebug];
 						statedebug++;
 						#endif
+						if (nextstate == CV_FORWARD) speed_xyr.y = SPEED_FORWARD;
+						else speed_xyr.y = SPEED_FORWARD_SLOW;
+						
 					}
 				break;
 				//看到交叉点，决定下一步怎么走
 				case CV_STOPSOON:
-					if (-60 < info.cvxpos && info.cvxpos < 60 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT)
+					if (-40 < info.cvxpos && info.cvxpos < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT)
 					{
 						if (nextstate == CV_FORWARD) speed_xyr.y = SPEED_FORWARD;
 						else speed_xyr.y = SPEED_FORWARD_SLOW;
+						continous++;
 						speed_xyr.x = KP_X*info.cvxpos;
 						//speed_xyr.r = KP_R*info.cvangle + KD_YAW*yaw_diff;
 						speed_xyr.r = KP_YAW*yaw_err + KD_YAW*yaw_diff;
@@ -593,9 +599,10 @@ int main(void)
 					//speed_xyr.x = KP_X*info.cvxpos;
 					//speed_xyr.r = KP_R*info.cvangle;
 					
-					if ((find_left && find_right) || (find_left_b && find_right_b))
+					if ((find_left && find_right) || (find_left_b && find_right_b) || continous > 100)
 					{
 						clear_all_irs();
+						continous = 0;
 						speed_xyr.x = 0;
 						speed_xyr.y = 0;
 						speed_xyr.r = 0;
@@ -686,7 +693,7 @@ int main(void)
 					
 					if (continous == 8) clear_fb();
 					
-					if (slowdown && ((find_front && find_back) || (find_right_f && find_right_b)) && continous > 7)
+					if ((slowdown && ((find_front && find_back) || (find_right_f && find_right_b)) && continous > 7) || continous > 150)
 					{
 						rand = 0;
 						clear_all_irs();
@@ -699,6 +706,9 @@ int main(void)
 						else if (dir==LEFT) big_y--;
 						else if (dir==DOWN) big_x++;
 						else if (dir==RIGHT) big_y++;
+						#if BIGDEBUG == 1
+						printf("bigX:%d,bigY:%d\n",big_x,big_y);
+						#endif
 						
 						//迷宫寻路
 						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
@@ -747,7 +757,7 @@ int main(void)
 					
 					if (continous == 8) clear_fb();
 					
-					if (slowdown && ((find_front && find_back) || (find_left_f && find_left_b)) && continous > 7)
+					if ((slowdown && ((find_front && find_back) || (find_left_f && find_left_b)) && continous > 7) || continous > 150)
 					{
 						rand = 0;
 						clear_all_irs();
@@ -760,6 +770,9 @@ int main(void)
 						else if (dir==LEFT) big_y++;
 						else if (dir==DOWN) big_x--;
 						else if (dir==RIGHT) big_y--;
+						#if BIGDEBUG == 1
+						printf("bigX:%d,bigY:%d\n",big_x,big_y);
+						#endif
 						
 						//迷宫寻路
 						char leftblock = 0;
@@ -808,7 +821,7 @@ int main(void)
 					
 					if (continous == 7) clear_lr();
 					
-					if (slowdown && ((find_left && find_right) || (find_left_f && find_right_f)) && continous > 6)
+					if ((slowdown && ((find_left && find_right) || (find_left_f && find_right_f)) && continous > 6) || continous > 150)
 					{
 						clear_all_irs();
 						rand = 0;
@@ -821,6 +834,9 @@ int main(void)
 						else if (dir==LEFT) big_x++;
 						else if (dir==DOWN) big_y++;
 						else if (dir==RIGHT) big_x--;
+						#if BIGDEBUG == 1
+						printf("bigX:%d,bigY:%d\n",big_x,big_y);
+						#endif
 						
 						//迷宫寻路
 						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
@@ -849,7 +865,7 @@ int main(void)
 					speed_xyr.x = KP_X*info.cvxpos;
 					speed_xyr.r = KP_YAW*yaw_err + KD_YAW*yaw_diff;
 					
-					if (continous > 22)
+					if (continous > 24)
 					{
 						state = UP_TURN;
 						continous = 0;
@@ -869,13 +885,7 @@ int main(void)
 			speed_xyr.y = 0;
 			speed_xyr.r = 0;
 		}
-		#if MOVEDEBUG == 1
-		speed_xyr.cal_speed = 1;
-		speed_xyr.x = 800;
-		speed_xyr.y = 0;
-		speed_xyr.r = 0;
-		#endif
-		if(speed_xyr.cal_speed != 0)
+		if(speed_xyr.cal_speed)
 		{
 			cal_mecanum(&speed_xyr,&common_mt_ctrl,motors);
 			speed_xyr.cal_speed = 0;
@@ -1379,7 +1389,7 @@ static void MX_USART3_UART_Init(void)
 
   /* USER CODE END USART3_Init 1 */
   huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
+  huart3.Init.BaudRate = 57600;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
   huart3.Init.StopBits = UART_STOPBITS_1;
   huart3.Init.Parity = UART_PARITY_NONE;
@@ -1406,9 +1416,6 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Channel2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
   /* DMA1_Channel3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);

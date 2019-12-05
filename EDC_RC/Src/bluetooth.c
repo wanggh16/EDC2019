@@ -135,7 +135,7 @@ void data_task(gameinfo *info)
 			if (0xfe == dataRxbuf[1])
 			{
 				info->matchstate = (dataRxbuf[8]&0xC0)==0x40?1:0;
-				info->yaw = *(int16_t *)&dataRxbuf[2];
+				info->yaw = (int16_t)(dataRxbuf[2] + ((uint16_t)dataRxbuf[3]<<7)) - 2000;
 				info->yaw = info->yaw - inityaw;
 				if (info->yaw >= 1800) info->yaw -= 3600;
 				else if (info->yaw < -1800) info->yaw += 3600;
@@ -159,9 +159,9 @@ void data_task(gameinfo *info)
 				else if (info->cvxf < 200 && info->cvxb > 200) info->cvxpos = (int16_t)info->cvxf - 80;
 				else if (info->cvxf < 200 && info->cvxb < 200) info->cvxpos = (int16_t)info->cvxf - (int16_t)info->cvxb;
 				if (info->cvxl > 200 && info->cvxr > 200) info->cvxpos1 = 0;
-				else if (info->cvxl > 200 && info->cvxr < 200) info->cvxpos1 = 80 - (int16_t)info->cvxr;
-				else if (info->cvxl < 200 && info->cvxr > 200) info->cvxpos1 = (int16_t)info->cvxl - 80;
-				else if (info->cvxl < 200 && info->cvxr < 200) info->cvxpos1 = (int16_t)info->cvxl - (int16_t)info->cvxr;
+				else if (info->cvxl > 200 && info->cvxr < 200) info->cvxpos1 = 78 - (int16_t)info->cvxr;
+				else if (info->cvxl < 200 && info->cvxr > 200) info->cvxpos1 = (int16_t)info->cvxl - 82;
+				else if (info->cvxl < 200 && info->cvxr < 200) info->cvxpos1 = (int16_t)info->cvxl - (int16_t)info->cvxr - 4;
 				if (info->cvxf < 200 && info->cvxb < 200) info->cvangle = (int16_t)info->cvxf + (int16_t)info->cvxb - 160;
 				else info->cvangle = 0;
 				if (info->cvxl < 200 && info->cvxr < 200) info->cvangle1 = (int16_t)info->cvxl + (int16_t)info->cvxr - 160;

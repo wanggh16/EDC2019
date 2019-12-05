@@ -1147,10 +1147,10 @@ Image Symbol Table
     i.__scatterload_null                     0x08002d94   Section        2  handlers.o(i.__scatterload_null)
     i.__scatterload_zeroinit                 0x08002d96   Section       14  handlers.o(i.__scatterload_zeroinit)
     i.main                                   0x08002da4   Section        0  main.o(i.main)
-    i.usart2_init                            0x08002ec4   Section        0  bluetooth.o(i.usart2_init)
-    i.usart_task                             0x08002f84   Section        0  bluetooth.o(i.usart_task)
-    .constdata                               0x08002fdc   Section       16  system_stm32f1xx.o(.constdata)
-    .constdata                               0x08002fec   Section        8  system_stm32f1xx.o(.constdata)
+    i.usart2_init                            0x08002ecc   Section        0  bluetooth.o(i.usart2_init)
+    i.usart_task                             0x08002f8c   Section        0  bluetooth.o(i.usart_task)
+    .constdata                               0x08002fe4   Section       16  system_stm32f1xx.o(.constdata)
+    .constdata                               0x08002ff4   Section        8  system_stm32f1xx.o(.constdata)
     .data                                    0x20000000   Section       20  bluetooth.o(.data)
     .data                                    0x20000014   Section        8  can.o(.data)
     .data                                    0x2000001c   Section        4  system_stm32f1xx.o(.data)
@@ -1355,13 +1355,13 @@ Image Symbol Table
     __scatterload_copy                       0x08002d87   Thumb Code    14  handlers.o(i.__scatterload_copy)
     __scatterload_null                       0x08002d95   Thumb Code     2  handlers.o(i.__scatterload_null)
     __scatterload_zeroinit                   0x08002d97   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
-    main                                     0x08002da5   Thumb Code   258  main.o(i.main)
-    usart2_init                              0x08002ec5   Thumb Code   176  bluetooth.o(i.usart2_init)
-    usart_task                               0x08002f85   Thumb Code    70  bluetooth.o(i.usart_task)
-    AHBPrescTable                            0x08002fdc   Data          16  system_stm32f1xx.o(.constdata)
-    APBPrescTable                            0x08002fec   Data           8  system_stm32f1xx.o(.constdata)
-    Region$$Table$$Base                      0x08002ff4   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x08003014   Number         0  anon$$obj.o(Region$$Table)
+    main                                     0x08002da5   Thumb Code   266  main.o(i.main)
+    usart2_init                              0x08002ecd   Thumb Code   176  bluetooth.o(i.usart2_init)
+    usart_task                               0x08002f8d   Thumb Code    70  bluetooth.o(i.usart_task)
+    AHBPrescTable                            0x08002fe4   Data          16  system_stm32f1xx.o(.constdata)
+    APBPrescTable                            0x08002ff4   Data           8  system_stm32f1xx.o(.constdata)
+    Region$$Table$$Base                      0x08002ffc   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x0800301c   Number         0  anon$$obj.o(Region$$Table)
     cv_cnt                                   0x20000000   Data           1  bluetooth.o(.data)
     USART_RX_CNT                             0x20000001   Data           1  bluetooth.o(.data)
     Capture_Data_left_1                      0x20000002   Data           2  bluetooth.o(.data)
@@ -1402,9 +1402,9 @@ Memory Map of the image
 
   Image Entry point : 0x080000ed
 
-  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00003040, Max: 0x00010000, ABSOLUTE)
+  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00003048, Max: 0x00010000, ABSOLUTE)
 
-    Execution Region ER_IROM1 (Base: 0x08000000, Size: 0x00003014, Max: 0x00010000, ABSOLUTE)
+    Execution Region ER_IROM1 (Base: 0x08000000, Size: 0x0000301c, Max: 0x00010000, ABSOLUTE)
 
     Base Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -1579,12 +1579,12 @@ Memory Map of the image
     0x08002d86   0x0000000e   Code   RO         3131    i.__scatterload_copy  mc_w.l(handlers.o)
     0x08002d94   0x00000002   Code   RO         3132    i.__scatterload_null  mc_w.l(handlers.o)
     0x08002d96   0x0000000e   Code   RO         3133    i.__scatterload_zeroinit  mc_w.l(handlers.o)
-    0x08002da4   0x00000120   Code   RO          195    i.main              main.o
-    0x08002ec4   0x000000c0   Code   RO           22    i.usart2_init       bluetooth.o
-    0x08002f84   0x00000058   Code   RO           23    i.usart_task        bluetooth.o
-    0x08002fdc   0x00000010   Data   RO          679    .constdata          system_stm32f1xx.o
-    0x08002fec   0x00000008   Data   RO          680    .constdata          system_stm32f1xx.o
-    0x08002ff4   0x00000020   Data   RO         3129    Region$$Table       anon$$obj.o
+    0x08002da4   0x00000128   Code   RO          195    i.main              main.o
+    0x08002ecc   0x000000c0   Code   RO           22    i.usart2_init       bluetooth.o
+    0x08002f8c   0x00000058   Code   RO           23    i.usart_task        bluetooth.o
+    0x08002fe4   0x00000010   Data   RO          679    .constdata          system_stm32f1xx.o
+    0x08002ff4   0x00000008   Data   RO          680    .constdata          system_stm32f1xx.o
+    0x08002ffc   0x00000020   Data   RO         3129    Region$$Table       anon$$obj.o
 
 
     Execution Region RW_IRAM1 (Base: 0x20000000, Size: 0x00000728, Max: 0x00005000, ABSOLUTE)
@@ -1616,7 +1616,7 @@ Image component sizes
         76          4          0          0          0        726   dma.o
        128          8          0          0          0        895   gpio.o
         44          8          0          0         12        663   iwdg.o
-       374         30          0          0         36       2220   main.o
+       382         30          0          0         36       2220   main.o
         36          8        236          0       1024        788   startup_stm32f103xb.o
        128         24          0         12          0       5201   stm32f1xx_hal.o
       1408          0          0          0          0      12264   stm32f1xx_hal_can.o
@@ -1635,7 +1635,7 @@ Image component sizes
        580         58          0          0        396       3141   usart.o
 
     ----------------------------------------------------------------------
-     11410        650        292         44       1788     561729   Object Totals
+     11418        650        292         44       1788     561729   Object Totals
          0          0         32          0          0          0   (incl. Generated)
         36          0          0          0          0          0   (incl. Padding)
 
@@ -1683,15 +1683,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     12016        666        292         44       1788     555637   Grand Totals
-     12016        666        292         44       1788     555637   ELF Image Totals
-     12016        666        292         44          0          0   ROM Totals
+     12024        666        292         44       1788     555637   Grand Totals
+     12024        666        292         44       1788     555637   ELF Image Totals
+     12024        666        292         44          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                12308 (  12.02kB)
+    Total RO  Size (Code + RO Data)                12316 (  12.03kB)
     Total RW  Size (RW Data + ZI Data)              1832 (   1.79kB)
-    Total ROM Size (Code + RO Data + RW Data)      12352 (  12.06kB)
+    Total ROM Size (Code + RO Data + RW Data)      12360 (  12.07kB)
 
 ==============================================================================
 
