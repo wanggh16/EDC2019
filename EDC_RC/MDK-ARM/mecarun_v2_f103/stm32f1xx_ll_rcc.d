@@ -23,7 +23,6 @@ mecarun_v2_f103\stm32f1xx_ll_rcc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1x
 mecarun_v2_f103\stm32f1xx_ll_rcc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cortex.h
 mecarun_v2_f103\stm32f1xx_ll_rcc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 mecarun_v2_f103\stm32f1xx_ll_rcc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
-mecarun_v2_f103\stm32f1xx_ll_rcc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2c.h
 mecarun_v2_f103\stm32f1xx_ll_rcc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 mecarun_v2_f103\stm32f1xx_ll_rcc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 mecarun_v2_f103\stm32f1xx_ll_rcc.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h

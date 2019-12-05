@@ -23,7 +23,6 @@ mecarun_v2_f103\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma_ex
 mecarun_v2_f103\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cortex.h
 mecarun_v2_f103\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 mecarun_v2_f103\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
-mecarun_v2_f103\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2c.h
 mecarun_v2_f103\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 mecarun_v2_f103\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 mecarun_v2_f103\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
@@ -41,10 +40,10 @@ mecarun_v2_f103\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_exti.h
 mecarun_v2_f103\main.o: ../Inc/led.h
 mecarun_v2_f103\main.o: ../Inc/motor.h
 mecarun_v2_f103\main.o: ../Inc/mecanum.h
-mecarun_v2_f103\main.o: ../Inc/oled.h
 mecarun_v2_f103\main.o: ../Inc/bluetooth.h
 mecarun_v2_f103\main.o: ../Inc/servo.h
 mecarun_v2_f103\main.o: ../Inc/config.h
 mecarun_v2_f103\main.o: C:\Program Files\ARM\ARMCC\Bin\..\include\math.h
 mecarun_v2_f103\main.o: ../Inc/maze_pathfinding.h
 mecarun_v2_f103\main.o: C:\Program Files\ARM\ARMCC\Bin\..\include\stdio.h
+mecarun_v2_f103\main.o: C:\Program Files\ARM\ARMCC\Bin\..\include\stdlib.h

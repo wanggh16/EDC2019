@@ -1,6 +1,7 @@
 //#include <stdio.h>
 #include "maze_pathfinding.h"
 
+#define STABLE 0
 #define INF_MAX 1000
 #define UNVISITED 0
 #define VISITED 1
@@ -359,7 +360,16 @@ void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, 
 			}
 		}
 	}
-
+	
+	//前后有墙禁止平移 防卡住
+	//if ((currentDir == UP || currentDir == DOWN) && (maze[posy][posx].wall & 5)) {goLEFT = TURNLEFT;goRIGHT = TURNRIGHT;}
+	//else if ((currentDir == LEFT || currentDir == RIGHT) && (maze[posy][posx].wall & 10)) {goLEFT = TURNLEFT;goRIGHT = TURNRIGHT
+	#if STABLE == 1
+	goLEFT = TURNLEFT;
+	goRIGHT = TURNRIGHT;
+	goBACK = TURNBACK;
+	#endif
+	
 	if (pathx[total_point - 2] - pathx[total_point - 1] == 1){//right
 		switch (currentDir){
 		case UP:	decision = goRIGHT;		break;

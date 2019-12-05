@@ -126,7 +126,7 @@ void data_task(gameinfo *info)
 		case 1:
 			break;
 		case 2:
-			HAL_UART_Receive_DMA(&huart3,&dataRxbuf[1],20);
+			HAL_UART_Receive_DMA(&huart3,&dataRxbuf[1],17);
 			data_cnt = 3;
 		break;
 		case 3:
@@ -139,10 +139,10 @@ void data_task(gameinfo *info)
 				info->yaw = info->yaw - inityaw;
 				if (info->yaw >= 1800) info->yaw -= 3600;
 				else if (info->yaw < -1800) info->yaw += 3600;
-				info->cvstate = dataRxbuf[4];
-				info->cvxpos = dataRxbuf[5];
-				info->cvangle = dataRxbuf[6];
-				info->cvypos = dataRxbuf[7];
+				info->cvxf = dataRxbuf[4];
+				info->cvxb = dataRxbuf[5];
+				info->cvxl = dataRxbuf[6];
+				info->cvxr = dataRxbuf[7];
 				info->AX = dataRxbuf[10] + (((uint16_t)dataRxbuf[8]&0x08)?0x100:0);
 				info->AY = dataRxbuf[11] + (((uint16_t)dataRxbuf[8]&0x04)?0x100:0);
 				info->BX = dataRxbuf[12] + (((uint16_t)dataRxbuf[8]&0x02)?0x100:0);
@@ -151,10 +151,21 @@ void data_task(gameinfo *info)
 				info->P1Y = dataRxbuf[15] + (((uint16_t)dataRxbuf[9]&0x40)?0x100:0);
 				info->P2X = dataRxbuf[16] + (((uint16_t)dataRxbuf[9]&0x20)?0x100:0);
 				info->P2Y = dataRxbuf[17] + (((uint16_t)dataRxbuf[9]&0x10)?0x100:0);
-				info->cvxpos1 = dataRxbuf[18];
-				info->cvangle1 = dataRxbuf[19];
-				info->cvypos1 = dataRxbuf[20];
 				info->renewed = 1;
+				
+				//kpx,kpr>0
+				if (info->cvxf > 200 && info->cvxb > 200) info->cvxpos = 0;
+				else if (info->cvxf > 200 && info->cvxb < 200) info->cvxpos = 80 - (int16_t)info->cvxb;
+				else if (info->cvxf < 200 && info->cvxb > 200) info->cvxpos = (int16_t)info->cvxf - 80;
+				else if (info->cvxf < 200 && info->cvxb < 200) info->cvxpos = (int16_t)info->cvxf - (int16_t)info->cvxb;
+				if (info->cvxl > 200 && info->cvxr > 200) info->cvxpos1 = 0;
+				else if (info->cvxl > 200 && info->cvxr < 200) info->cvxpos1 = 80 - (int16_t)info->cvxr;
+				else if (info->cvxl < 200 && info->cvxr > 200) info->cvxpos1 = (int16_t)info->cvxl - 80;
+				else if (info->cvxl < 200 && info->cvxr < 200) info->cvxpos1 = (int16_t)info->cvxl - (int16_t)info->cvxr;
+				if (info->cvxf < 200 && info->cvxb < 200) info->cvangle = (int16_t)info->cvxf + (int16_t)info->cvxb - 160;
+				else info->cvangle = 0;
+				if (info->cvxl < 200 && info->cvxr < 200) info->cvangle1 = (int16_t)info->cvxl + (int16_t)info->cvxr - 160;
+				else info->cvangle1 = 0;
 				
 				int16_t oldX = info->X;
 				int16_t oldY = info->Y;
@@ -169,6 +180,7 @@ void data_task(gameinfo *info)
 				info->P1Y = 280 - info->P1Y;
 				info->P2Y = 280 - info->P2Y;
 				//防上位机坐标乱跳
+				#if CVDEBUG == 0
 				if (state < 10)
 				{
 					if (info->X <= 0 || info->X >= 280 || info->Y <= 0 || info->Y >= 280)// || (oldX-info->X)*(oldX-info->X) + (oldY-info->Y)*(oldY-info->Y) > 30)
@@ -180,6 +192,7 @@ void data_task(gameinfo *info)
 					}
 					else wrong = 0;
 				}
+				#endif
 				//转换格点坐标
 				info->P1BX = smalltobig(info->P1X, 56, 206);
 				info->P1BY = smalltobig(info->P1Y, 72, 222);
