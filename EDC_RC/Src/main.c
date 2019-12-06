@@ -105,7 +105,9 @@ char state = 0;
 int8_t move_en = 0;
 uint32_t newtime = 0;
 char find_left = 0, find_right = 0, find_left_f = 0, find_right_f = 0, find_left_b = 0, find_right_b = 0, find_front = 0, find_back = 0;
-
+//迷宫内当前格点坐标
+int8_t big_x = 0;
+int8_t big_y = 0;
 //uint8_t debugpid = 0;
  
 /* USER CODE END PV */
@@ -267,19 +269,19 @@ int main(void)
 	#define ir_right_b GPIO_PIN_0 //PORT B
 	
 	//迷宫内行进速度、比例系数、90度转向实际大小
-	#define SPEED_FORWARD 1600
-	#define SPEED_FORWARD_SLOW 250
+	#define SPEED_FORWARD 1300
+	#define SPEED_FORWARD_SLOW 300
 	#define SPEED_TURN 1200
 	#define SPEED_TURN_SLOW 500
-	#define SPEED_LR 1200
+	#define SPEED_LR 1000
 	#define SPEED_LR_SLOW 250
-	#define SPEED_BACK 1400
-	#define SPEED_BACK_SLOW 250
+	#define SPEED_BACK 1300
+	#define SPEED_BACK_SLOW 300
 	#define KP_X 4                                                          
 	#define KP_R 2
 	#define KP_X1 5                                                          
 	#define KP_R1 3
-	#define KP_YAW 2
+	#define KP_YAW 2.5
 	#define KD_YAW 6
 	#define YAW_PERMIT 120
 	#define TURN_SLOW_YAW 500
@@ -302,10 +304,6 @@ int main(void)
 	uint16_t TARGETX = 0;
 	uint16_t TARGETY = 0;
 	
-	//迷宫内当前格点坐标
-	int8_t big_x = 0;
-	int8_t big_y = 0;
-	
 	//角度和距离临时变量
 	int16_t dst = 0;
 	int16_t dy = 0;
@@ -318,11 +316,13 @@ int main(void)
 	//连续看到横线次数
 	unsigned char continous = 0;
 	char slowdown = 0;
+	int8_t rand = 0;
+	char noslowdown = 0;
 	
 	//出迷宫
 	char arrived = 0;
 	
-	int8_t rand = 0;
+
 	
 	#if CVDEBUG == 1
 	char states[] = {CV_FORWARD, CV_TURNLEFT, CV_FORWARD, CV_LEFT, CV_BACK, CV_RIGHT, CV_TURNRIGHT, CV_BACK};
@@ -508,7 +508,7 @@ int main(void)
 				break;
 				//正常视觉巡线
 				case CV_FORWARD:
-					if (-50 < info.cvxpos && info.cvxpos < 50 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT)
+					if (-45 < info.cvxpos && info.cvxpos < 45 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT)
 					{
 						speed_xyr.y = SPEED_FORWARD;
 						continous++;
@@ -526,8 +526,8 @@ int main(void)
 					//speed_xyr.x = KP_X*info.cvxpos;
 					//speed_xyr.r = KP_R*info.cvangle;
 					
-					if (continous == 6) clear_lr();
-					if ((find_left_f && find_right_f && continous > 5) || continous > 100)
+					if (continous == 9 && (!(HAL_GPIO_ReadPin(GPIOC,ir_left) && HAL_GPIO_ReadPin(GPIOC,ir_right)))) clear_lr();
+					if ((find_left_f && find_right_f && continous > 8) || continous > 100)
 					{
 						continous = 0;
 						clear_all_irs_except_lr();
@@ -550,13 +550,13 @@ int main(void)
 						#if BALLMODE == 1
 						uint8_t decision = PathFinding(dir,big_x + 1,big_y + 1,5,1,wallrefresh);
 						#else
-						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
+						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
 						#endif
 						
 						if (decision == 255)
 						{
 							ClearWalls();
-							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
+							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
 						}
 						switch(decision){
 							case 0://arrived
@@ -673,7 +673,7 @@ int main(void)
 						slowdown = 1;
 						clear_all_irs_except_fb();
 					}
-					if (-40 < info.cvxpos1 && info.cvxpos1 < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
+					if (-35 < info.cvxpos1 && info.cvxpos1 < 35 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
 					{
 						if (slowdown) {speed_xyr.x = -SPEED_LR_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
 						else {speed_xyr.x = -SPEED_LR;continous++;}
@@ -692,7 +692,7 @@ int main(void)
 					//speed_xyr.r = KP_R*info.cvangle1;
 					
 					
-					if (continous == 11) clear_fb();
+					if (continous == 11 && (!(HAL_GPIO_ReadPin(GPIOB,ir_front) && HAL_GPIO_ReadPin(GPIOB,ir_back)))) clear_fb();
 					
 					if ((slowdown && ((find_front && find_back) || (find_right_f && find_right_b)) && continous > 10) || continous > 150)
 					{
@@ -718,11 +718,11 @@ int main(void)
 						char backblock = !HAL_GPIO_ReadPin(GPIOC,IR_BACK);
 						char wallrefresh = (backblock << 3) + (leftblock << 2) + (frontblock << 1) + rightblock;
 						
-						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
+						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
 						if (decision == 255)
 						{
 							ClearWalls();
-							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
+							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
 						}
 						state = decision;
 						#if CVDEBUG==1
@@ -739,7 +739,7 @@ int main(void)
 						slowdown = 1;
 						clear_all_irs_except_fb();
 					}
-					if (-40 < info.cvxpos1 && info.cvxpos1 < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
+					if (-35 < info.cvxpos1 && info.cvxpos1 < 35 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
 					{
 						if (slowdown) {speed_xyr.x = SPEED_LR_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
 						else {speed_xyr.x = SPEED_LR;continous++;}
@@ -757,7 +757,7 @@ int main(void)
 					//speed_xyr.y = KP_X*info.cvxpos1;
 					//speed_xyr.r = KP_R*info.cvangle1;
 					
-					if (continous == 11) clear_fb();
+					if (continous == 11 && (!(HAL_GPIO_ReadPin(GPIOB,ir_front) && HAL_GPIO_ReadPin(GPIOB,ir_back)))) clear_fb();
 					
 					if ((slowdown && ((find_front && find_back) || (find_left_f && find_left_b)) && continous > 10) || continous > 150)
 					{
@@ -783,11 +783,11 @@ int main(void)
 						char backblock = !HAL_GPIO_ReadPin(GPIOC,IR_BACK);
 						char wallrefresh = (backblock << 3) + (leftblock << 2) + (frontblock << 1) + rightblock;
 						
-						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
+						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
 						if (decision == 255)
 						{
 							ClearWalls();
-							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
+							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
 						}
 						state = decision;
 						#if CVDEBUG==1
@@ -804,9 +804,9 @@ int main(void)
 						slowdown = 1;
 						clear_all_irs_except_lr();
 					}
-					if (-50 < info.cvxpos && info.cvxpos < 50 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
+					if (-45 < info.cvxpos && info.cvxpos < 45 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
 					{
-						if (slowdown) {speed_xyr.y = -SPEED_BACK_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
+						if (slowdown && (!noslowdown)) {speed_xyr.y = -SPEED_BACK_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
 						else {speed_xyr.y = -SPEED_BACK;continous++;}
 						speed_xyr.x = KP_X*info.cvxpos;
 						//speed_xyr.r = KP_R*info.cvangle + KD_YAW*yaw_diff;
@@ -822,9 +822,9 @@ int main(void)
 					//speed_xyr.x = KP_X*info.cvxpos;
 					//speed_xyr.r = KP_R*info.cvangle;
 					
-					if (continous == 10) clear_lr();
+					if (continous == 9 && (!(HAL_GPIO_ReadPin(GPIOC,ir_left) && HAL_GPIO_ReadPin(GPIOC,ir_right)))) clear_lr();
 					
-					if ((slowdown && ((find_left && find_right) || (find_left_f && find_right_f)) && continous > 9) || continous > 150)
+					if ((slowdown && ((find_left && find_right) || (find_left_f && find_right_f)) && continous > 8) || continous > 150)
 					{
 						clear_all_irs();
 						rand = 0;
@@ -848,11 +848,11 @@ int main(void)
 						char backblock = !HAL_GPIO_ReadPin(GPIOC,IR_BACK);
 						char wallrefresh = (backblock << 3) + (leftblock << 2) + (frontblock << 1) + rightblock;
 						
-						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
+						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
 						if (decision == 255)
 						{
 							ClearWalls();
-							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh);
+							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
 						}
 						state = decision;
 						#if CVDEBUG==1

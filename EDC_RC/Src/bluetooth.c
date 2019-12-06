@@ -18,6 +18,9 @@ extern int8_t move_en;
 extern uint32_t newtime;
 extern char state;
 
+extern int8_t big_x;
+extern int8_t big_y;
+
 uint8_t wrong = 0;
 extern int16_t inityaw;
 
@@ -67,10 +70,10 @@ void BT_task(mt_ctrltype *ctrl,pidtype *mt,speed3axistype *speed)
 					#endif
 				}
 				else if (btRxbuf[2]=='x') move_en = 0;
-				else if (btRxbuf[2]=='w') {speed->y = 500;speed->x = 0;speed->r = 0;}
-				else if (btRxbuf[2]=='s') {speed->y = -500;speed->x = 0;speed->r = 0;}
-				else if (btRxbuf[2]=='a') {speed->y = 0;speed->x = -500;speed->r = 0;}
-				else if (btRxbuf[2]=='d') {speed->y = 0;speed->x = 500;speed->r = 0;}
+				else if (btRxbuf[2]=='w') big_y++;//{speed->y = 500;speed->x = 0;speed->r = 0;}
+				else if (btRxbuf[2]=='s') big_y--;//{speed->y = -500;speed->x = 0;speed->r = 0;}
+				else if (btRxbuf[2]=='a') big_x--;//{speed->y = 0;speed->x = -500;speed->r = 0;}
+				else if (btRxbuf[2]=='d') big_x++;//{speed->y = 0;speed->x = 500;speed->r = 0;}
 				else if (btRxbuf[2]=='q') {speed->y = 0;speed->x = 0;speed->r = -500;}
 				else if (btRxbuf[2]=='e') {speed->y = 0;speed->x = 0;speed->r = 500;}
 				/*
@@ -161,7 +164,7 @@ void data_task(gameinfo *info)
 				if (info->cvxl > 200 && info->cvxr > 200) info->cvxpos1 = 0;
 				else if (info->cvxl > 200 && info->cvxr < 200) info->cvxpos1 = 77 - (int16_t)info->cvxr;
 				else if (info->cvxl < 200 && info->cvxr > 200) info->cvxpos1 = (int16_t)info->cvxl - 83;
-				else if (info->cvxl < 200 && info->cvxr < 200) info->cvxpos1 = (int16_t)info->cvxl - (int16_t)info->cvxr - 6;
+				else if (info->cvxl < 200 && info->cvxr < 200) info->cvxpos1 = (int16_t)info->cvxl - (int16_t)info->cvxr - 7;
 				if (info->cvxf < 200 && info->cvxb < 200) info->cvangle = (int16_t)info->cvxf + (int16_t)info->cvxb - 160;
 				else info->cvangle = 0;
 				if (info->cvxl < 200 && info->cvxr < 200) info->cvangle1 = (int16_t)info->cvxl + (int16_t)info->cvxr - 160;

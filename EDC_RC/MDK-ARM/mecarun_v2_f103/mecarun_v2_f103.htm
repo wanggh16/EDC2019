@@ -3,11 +3,11 @@
 <title>Static Call Graph - [mecarun_v2_f103\mecarun_v2_f103.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image mecarun_v2_f103\mecarun_v2_f103.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060422: Last Updated: Thu Dec 05 21:51:59 2019
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060422: Last Updated: Fri Dec 06 12:22:55 2019
 <BR><P>
 <H3>Maximum Stack Usage =        440 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
-main &rArr; sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dadd &rArr; _double_epilogue &rArr; _double_round
+main &rArr; PersonFinding &rArr; MakePath &rArr; MakeDecision
 <P>
 <H3>
 Mutually Recursive functions
@@ -371,7 +371,8 @@ Global Symbols
 <LI><a href="#[5c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_double_round
 <LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_double_epilogue
 </UL>
-<BR>[Called By]<UL><LI><a href="#[d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;smalltobig
+<BR>[Called By]<UL><LI><a href="#[46]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<LI><a href="#[d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;smalltobig
 <LI><a href="#[5d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dsub
 <LI><a href="#[5e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_drsub
 <LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__kernel_poly
@@ -596,7 +597,7 @@ Global Symbols
 <LI><a href="#[6d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ClearWalls
 </UL>
 
-<P><STRONG><a name="[6a]"></a>BT_task</STRONG> (Thumb, 174 bytes, Stack size 24 bytes, bluetooth.o(i.BT_task))
+<P><STRONG><a name="[6a]"></a>BT_task</STRONG> (Thumb, 172 bytes, Stack size 24 bytes, bluetooth.o(i.BT_task))
 <BR><BR>[Stack]<UL><LI>Max Depth = 76<LI>Call Chain = BT_task &rArr; HAL_UART_Receive_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Receive_DMA
@@ -612,7 +613,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f103xe.o(RESET)
 </UL>
-<P><STRONG><a name="[6d]"></a>ClearWalls</STRONG> (Thumb, 144 bytes, Stack size 16 bytes, maze_pathfinding.o(i.ClearWalls))
+<P><STRONG><a name="[6d]"></a>ClearWalls</STRONG> (Thumb, 148 bytes, Stack size 16 bytes, maze_pathfinding.o(i.ClearWalls))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = ClearWalls
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;AddWall
@@ -1056,7 +1057,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_TIM1_Init
 </UL>
 
-<P><STRONG><a name="[af]"></a>MakeDecision</STRONG> (Thumb, 322 bytes, Stack size 88 bytes, maze_pathfinding.o(i.MakeDecision))
+<P><STRONG><a name="[af]"></a>MakeDecision</STRONG> (Thumb, 376 bytes, Stack size 88 bytes, maze_pathfinding.o(i.MakeDecision))
 <BR><BR>[Stack]<UL><LI>Max Depth = 88<LI>Call Chain = MakeDecision
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
@@ -1064,8 +1065,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[b0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MakePath
 </UL>
 
-<P><STRONG><a name="[b0]"></a>MakePath</STRONG> (Thumb, 814 bytes, Stack size 64 bytes, maze_pathfinding.o(i.MakePath))
-<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = MakePath &rArr; MakeDecision
+<P><STRONG><a name="[b0]"></a>MakePath</STRONG> (Thumb, 804 bytes, Stack size 72 bytes, maze_pathfinding.o(i.MakePath))
+<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = MakePath &rArr; MakeDecision
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ReturnFirstStep
 <LI><a href="#[af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MakeDecision
@@ -1117,8 +1118,8 @@ Global Symbols
 <P><STRONG><a name="[8]"></a>PendSV_Handler</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32f1xx_it.o(i.PendSV_Handler))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f103xe.o(RESET)
 </UL>
-<P><STRONG><a name="[bb]"></a>PersonFinding</STRONG> (Thumb, 88 bytes, Stack size 64 bytes, maze_pathfinding.o(i.PersonFinding))
-<BR><BR>[Stack]<UL><LI>Max Depth = 216<LI>Call Chain = PersonFinding &rArr; MakePath &rArr; MakeDecision
+<P><STRONG><a name="[bb]"></a>PersonFinding</STRONG> (Thumb, 122 bytes, Stack size 96 bytes, maze_pathfinding.o(i.PersonFinding))
+<BR><BR>[Stack]<UL><LI>Max Depth = 256<LI>Call Chain = PersonFinding &rArr; MakePath &rArr; MakeDecision
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MakePath
 </UL>
@@ -1431,8 +1432,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[46]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[46]"></a>main</STRONG> (Thumb, 4310 bytes, Stack size 192 bytes, main.o(i.main))
-<BR><BR>[Stack]<UL><LI>Max Depth = 440<LI>Call Chain = main &rArr; sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dadd &rArr; _double_epilogue &rArr; _double_round
+<P><STRONG><a name="[46]"></a>main</STRONG> (Thumb, 4722 bytes, Stack size 184 bytes, main.o(i.main))
+<BR><BR>[Stack]<UL><LI>Max Depth = 440<LI>Call Chain = main &rArr; PersonFinding &rArr; MakePath &rArr; MakeDecision
 </UL>
 <BR>[Calls]<UL><LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2d
 <LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ddiv
@@ -1460,6 +1461,7 @@ Global Symbols
 <LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_GPIO_Init
 <LI><a href="#[bb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PersonFinding
 <LI><a href="#[6d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ClearWalls
+<LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dadd
 <LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2iz
 <LI><a href="#[d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;data_task
 <LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BT_task
