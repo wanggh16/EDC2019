@@ -361,16 +361,16 @@ void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, 
 		if (total_point - turnindex <= 4) goBACK = DIRECTBACK;
 		if (total_point - turnindex <= 3){
 			//goBACK = DIRECTBACK;
-			//char nextDir = 0;
-			//if (pathx[turnindex - 1] - pathx[turnindex] == 1) nextDir = RIGHT;
-			//else if (pathx[turnindex - 1] - pathx[turnindex] == -1) nextDir = LEFT;
-			//else if (pathy[turnindex - 1] - pathy[turnindex] == 1) nextDir = UP;
-			//else if (pathy[turnindex - 1] - pathy[turnindex] == -1) nextDir = DOWN;
+			char nextDir = 0;
+			if (pathx[turnindex - 1] - pathx[turnindex] == 1) nextDir = RIGHT;
+			else if (pathx[turnindex - 1] - pathx[turnindex] == -1) nextDir = LEFT;
+			else if (pathy[turnindex - 1] - pathy[turnindex] == 1) nextDir = UP;
+			else if (pathy[turnindex - 1] - pathy[turnindex] == -1) nextDir = DOWN;
 
-			//if (nextDir == currentDir){
-			goLEFT = DIRECTLEFT;
-			goRIGHT = DIRECTRIGHT;
-			//}
+			if (nextDir == currentDir){
+				goLEFT = DIRECTLEFT;
+				goRIGHT = DIRECTRIGHT;
+			}
 		}
 	}
 
