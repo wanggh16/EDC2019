@@ -23,7 +23,7 @@
 #include "can.h"
 #include "dma.h"
 #include "iwdg.h"
-#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -50,8 +50,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-gameinfo info={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-char send[21]={0};
+gameinfo info={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+char send[18]={0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -103,11 +103,21 @@ int main(void)
   MX_CAN_Init();
   MX_IWDG_Init();
   MX_USART2_UART_Init();
-  MX_SPI1_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 	USER_CAN_Init();
 	usart2_init(36,115200);
 	uint32_t print_time = 0;
+	HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
+	HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_2);
+	HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
+	HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);
+	HAL_TIM_IC_Start_IT(&htim4, TIM_CHANNEL_1);
+	HAL_TIM_IC_Start_IT(&htim4, TIM_CHANNEL_2);
+	
+	int cnt = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -119,15 +129,14 @@ int main(void)
     /* USER CODE BEGIN 3 */
 		
 		usart_task();
-		spi_task();
 		send[0]=0xff;
 		send[1]=0xfe;
-		send[2]=(info.yaw)&0xff;
-		send[3]=(info.yaw)>>8;
-		send[4]=info.cvstate + (info.cvstate1 << 2);
-		send[5]=info.cvxpos;
-		send[6]=info.cvangle;
-		send[7]=info.cvypos;
+		send[2]=((uint16_t)(info.yaw + 2000))&0x7f;
+		send[3]=((uint16_t)(info.yaw + 2000))>>7;
+		send[4]=info.cvxf;
+		send[5]=info.cvxb;
+		send[6]=info.cvxl;
+		send[7]=info.cvxr;
 		send[8] = info.mixed0;
 		send[9] = info.mixed1;
 		send[10] = info.AXL;
@@ -138,14 +147,17 @@ int main(void)
 		send[15] = info.P1YL;
 		send[16] = info.P2XL;
 		send[17] = info.P2YL;
-		send[18] = info.cvxpos1;
-		send[19] = info.cvangle1;
-		send[20] = info.cvypos1;
 		if (HAL_GetTick() > print_time)
 		{
 			HAL_UART_Transmit_DMA(&huart1, (uint8_t *)send, sizeof(send));
 			print_time = HAL_GetTick() + 20;
 			HAL_IWDG_Refresh(&hiwdg);
+			if (cnt == 9)
+			{
+				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+				cnt = 0;
+			}
+			else cnt++;
 			//usart2_send(0x0f);
 		}
   }

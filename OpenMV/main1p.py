@@ -16,7 +16,7 @@ sensor.set_pixformat(sensor.GRAYSCALE) # grayscale is faster
 sensor.set_framesize(sensor.QQVGA)
 sensor.skip_frames(time = 1000)
 clock = time.clock()
-grayscale_thres = (135,255)
+grayscale_thres = (100,255)
 thres = (0,50)
 
 # 所有线段都有 `x1()`, `y1()`, `x2()`, and `y2()` 方法来获得他们的终点
@@ -27,7 +27,7 @@ def kToAngle(k_inv):
     angle = math.degrees(math.atan(k_inv)) + 90
     return angle
 
-num = 13
+num = 33
 #horiz_found = [False] * num
 k = 0
 angle = 0
@@ -38,7 +38,7 @@ x_pos = 0
 
 while(True):
     clock.tick()
-    img = sensor.snapshot()
+    img = sensor.snapshot().rotation_corr(x_rotation = 30)
     img.binary([grayscale_thres])
     img.dilate(2)
     img.erode(4)
@@ -53,7 +53,7 @@ while(True):
     found_cnt = 0
     pixels_total = 0
     for i in range(0,num):
-        blobs = img.find_blobs([thres],roi = [0,3*i,160,3],pixels_threshold = 40,margin = 0)
+        blobs = img.find_blobs([thres],roi = [16,3*i,128,3],pixels_threshold = 15,margin = 0)
         if blobs:
             for blob in blobs:
                 pixels_total += blob.pixels()
@@ -138,7 +138,7 @@ while(True):
 
     #uart send
     sendlist = bytearray([0xff,0xfe,IsEmpty + (IsFound << 1),int(x_pos),int(angle),int(y_pos)])
-    #print('x',x_pos)
+    print('x',x_pos)
     #print('y',y_pos)
     #print('a',angle)
     #print(IsEmpty,IsFound,found_cnt)

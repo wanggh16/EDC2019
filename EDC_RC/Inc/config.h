@@ -18,6 +18,8 @@
 
 #define BALLMODE 1
 
-#define CVDEBUG 1
+#define CVDEBUG 0
+
+#define BIGDEBUG 1
 
 #endif

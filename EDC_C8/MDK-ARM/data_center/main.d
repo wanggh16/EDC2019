@@ -25,12 +25,13 @@ data_center\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 data_center\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 data_center\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_iwdg.h
 data_center\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
-data_center\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h
+data_center\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
+data_center\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 data_center\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
 data_center\main.o: ../Inc/can.h
 data_center\main.o: ../Inc/dma.h
 data_center\main.o: ../Inc/iwdg.h
-data_center\main.o: ../Inc/spi.h
+data_center\main.o: ../Inc/tim.h
 data_center\main.o: ../Inc/usart.h
 data_center\main.o: ../Inc/gpio.h
 data_center\main.o: ../Inc/bluetooth.h

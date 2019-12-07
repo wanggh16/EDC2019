@@ -4,63 +4,51 @@
 
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
-extern SPI_HandleTypeDef hspi1;
+extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim4;
 uint8_t cv_cnt = 0;
-uint8_t cv1_cnt = 0;
 uint8_t cvRxbuf[10]={0};
-uint8_t cv1Rxbuf[10]={0};
-
+uint16_t Capture_Data_left_1=0;
+uint16_t Capture_Data_left_2=0;
+uint16_t Capture_Data_right_1=0;
+uint16_t Capture_Data_right_2=0;
+uint16_t Capture_Data_back_1=0;
+uint16_t Capture_Data_back_2=0;
 int wrong = 0;
 extern gameinfo info;
 
-void spi_task()
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-	switch(cv1_cnt)
+	//left
+	if (htim == &htim2 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
 	{
-		case 0:
-			cv1Rxbuf[0] = 0;
-			HAL_SPI_Receive_DMA(&hspi1,cv1Rxbuf,1);
-			cv1_cnt = 1;
-		break;
-		case 1:
-			break;
-		case 2:
-			HAL_SPI_Receive_DMA(&hspi1,&cv1Rxbuf[1],5);
-			cv1_cnt = 3;
-		break;
-		case 3:
-		break;
-		case 4:
-			if (cv1Rxbuf[1] == 0xfe)
-			{
-				info.cvstate1 = cv1Rxbuf[2];
-				info.cvxpos1 = cv1Rxbuf[3];
-				info.cvangle1 = cv1Rxbuf[4];
-				info.cvypos1 = cv1Rxbuf[5];
-			}
-			cv1_cnt = 0;
-			break;
-		default:
-			cv1_cnt = 0;		
+		Capture_Data_left_1 = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+		if (Capture_Data_left_1) info.cvxl = 250*Capture_Data_left_2/Capture_Data_left_1;
 	}
-}
-
-void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-	if(hspi == &hspi1)
+	else if (htim == &htim2 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2)
 	{
-		switch(cv1_cnt)
-		{
-			case 1:
-			if(0xff == cv1Rxbuf[0])
-				cv1_cnt = 2;
-			else
-				cv1_cnt = 0;
-			break;
-			case 3:
-				cv1_cnt = 4;
-			break;
-		}
+		Capture_Data_left_2 = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_2);
+	}
+	//right
+	if (htim == &htim3 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+	{
+		Capture_Data_right_1 = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);
+		if (Capture_Data_right_1) info.cvxr = 250*Capture_Data_right_2/Capture_Data_right_1;
+	}
+	else if (htim == &htim3 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2)
+	{
+		Capture_Data_right_2 = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
+	}
+	//back
+	if (htim == &htim4 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+	{
+		Capture_Data_back_1 = HAL_TIM_ReadCapturedValue(&htim4, TIM_CHANNEL_1);
+		if (Capture_Data_back_1) info.cvxb = 250*Capture_Data_back_2/Capture_Data_back_1;
+	}
+	else if (htim == &htim4 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2)
+	{
+		Capture_Data_back_2 = HAL_TIM_ReadCapturedValue(&htim4, TIM_CHANNEL_2);
 	}
 }
 
@@ -83,7 +71,7 @@ void usart_task()
 		case 1:
 			break;
 		case 2:
-			HAL_UART_Receive_DMA(&huart3,&cvRxbuf[1],5);
+			HAL_UART_Receive_DMA(&huart3,&cvRxbuf[1],2);
 			cv_cnt = 3;
 		break;
 		case 3:
@@ -91,10 +79,7 @@ void usart_task()
 		case 4:
 			if (cvRxbuf[1] == 0xfe)
 			{
-				info.cvstate = cvRxbuf[2];
-				info.cvxpos = cvRxbuf[3];
-				info.cvangle = cvRxbuf[4];
-				info.cvypos = cvRxbuf[5];
+				info.cvxf = cvRxbuf[2];
 			}
 			cv_cnt = 0;
 			break;

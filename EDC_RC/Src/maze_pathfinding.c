@@ -1,6 +1,7 @@
 //#include <stdio.h>
 #include "maze_pathfinding.h"
 
+#define STABLE 0
 #define INF_MAX 1000
 #define UNVISITED 0
 #define VISITED 1
@@ -29,6 +30,7 @@ struct mazenode{
 	struct mazenode* parent;
 	int priority;
 	char visited;
+	char wallcomplete;
 };
 
 //定义迷宫二维数组（含边界外的一层）
@@ -63,6 +65,7 @@ void ClearWalls (void){
 	for (int i = 0; i < 8; i++){
 		for (int j = 0; j < 8; j++){
 			maze[i][j].wall = 0;
+			maze[i][j].wallcomplete = 0;
 			//加入边界围墙信息
 			if (j == 1) maze[i][j].wall |= 2;
 			if (j == 6) maze[i][j].wall |= 8;
@@ -78,10 +81,10 @@ void ClearWalls (void){
 }
 
 void ReturnFirstStep(char currentDir, char posx, char posy, char aimx, char aimy, unsigned char* dec);
-void MakeDecision(char currentDir, char posx, char posy, char aimx, char aimy, unsigned char* dec);
+void MakeDecision(char currentDir, char posx, char posy, char aimx, char aimy, unsigned char* dec, char* straightforward);
 
 //参数：当前方向，xy坐标，目标位置xy坐标（范围1-6,要在原坐标基础上加1），当前位置障碍情况（0-2位分别是后，右，前，左侧有无障碍）
-unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char aimy, char wallrefresh, int* pri_total, char mode){
+unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char aimy, char wallrefresh, int* pri_total, char mode,char* straightforward){
 	unsigned char decision = 255;
 
 	//起点终点重合返回ARRIVED = 0
@@ -115,6 +118,7 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 		break;
 	default: break;
 	}
+	maze[posy][posx].wallcomplete = 1;
 
 	//清空规划路线的中间信息
 	for (int i = 0; i < 8; i++){
@@ -156,36 +160,36 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 		int pathweight = INF_MAX;
 		//right
 		if ((selectednode -> wall & 8) != 0) pathweight = INF_MAX;
-		else if (dirjudge == 0 || dirjudge == 1) pathweight = 1;
-		else if (dirjudge == -1) pathweight = 3;
-		else  pathweight = 2;
+		else if (dirjudge == 0 || dirjudge == 1) pathweight = 3;
+		else if (dirjudge == -1) pathweight = 5;
+		else  pathweight = 5;
 		if (selectednode -> priority + pathweight < rightnode -> priority){
 			rightnode -> priority = selectednode -> priority + pathweight;
 			rightnode -> parent = selectednode;
 		}
 		//left
 		if ((selectednode -> wall & 2) != 0) pathweight = INF_MAX;
-		else if (dirjudge == 0 || dirjudge == -1) pathweight = 1;
-		else if (dirjudge == 1) pathweight = 3;
-		else  pathweight = 2;
+		else if (dirjudge == 0 || dirjudge == -1) pathweight = 3;
+		else if (dirjudge == 1) pathweight = 5;
+		else  pathweight = 5;
 		if (selectednode -> priority + pathweight < leftnode -> priority){
 			leftnode -> priority = selectednode -> priority + pathweight;
 			leftnode -> parent = selectednode;
 		}
 		//down
 		if ((selectednode -> wall & 4) != 0) pathweight = INF_MAX;
-		else if (dirjudge == 0 || dirjudge == -8) pathweight = 1;
-		else if (dirjudge == 8) pathweight = 3;
-		else  pathweight = 2;
+		else if (dirjudge == 0 || dirjudge == -8) pathweight = 3;
+		else if (dirjudge == 8) pathweight = 5;
+		else  pathweight = 5;
 		if (selectednode -> priority + pathweight < downnode -> priority){
 			downnode -> priority = selectednode -> priority + pathweight;
 			downnode -> parent = selectednode;
 		}
 		//up
 		if ((selectednode -> wall & 1) != 0) pathweight = INF_MAX;
-		else if (dirjudge == 0 || dirjudge == 8) pathweight = 1;
-		else if (dirjudge == -8) pathweight = 3;
-		else  pathweight = 2;
+		else if (dirjudge == 0 || dirjudge == 8) pathweight = 3;
+		else if (dirjudge == -8) pathweight = 5;
+		else  pathweight = 5;
 		if (selectednode -> priority + pathweight < upnode -> priority){
 			upnode -> priority = selectednode -> priority + pathweight;
 			upnode -> parent = selectednode;
@@ -194,24 +198,24 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 		if (dirjudge == 0){
 			switch(currentDir){
 			case UP:
-				downnode -> priority += 2;
-				rightnode -> priority += 1;
-				leftnode -> priority += 1;
+				downnode -> priority += 2;//2;
+				rightnode -> priority += 2;
+				leftnode -> priority += 2;
 				break;
 			case DOWN:
-				upnode -> priority += 2;
-				rightnode -> priority += 1;
-				leftnode -> priority += 1;
+				upnode -> priority += 2;//2;
+				rightnode -> priority += 2;
+				leftnode -> priority += 2;
 				break;
 			case LEFT:
-				rightnode -> priority += 2;
-				upnode -> priority += 1;
-				downnode -> priority += 1;
+				rightnode -> priority += 2;//2;
+				upnode -> priority += 2;
+				downnode -> priority += 2;
 				break;
 			case RIGHT:
-				leftnode -> priority += 2;
-				upnode -> priority += 1;
-				downnode -> priority += 1;
+				leftnode -> priority += 2;//2;
+				upnode -> priority += 2;
+				downnode -> priority += 2;
 				break;
 			default: break;
 			}
@@ -224,16 +228,16 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 	/*path test print
 	int path[6][6] = {0};
 	for (mazenode* node = &maze[aimy][aimx]; node != NULL; node = node->parent){
-		int x = (node - &maze[0][0]) / 8 - 1;
-		int y = (node - &maze[0][0]) % 8 - 1;
-		path[x][y] = node->priority;
+	int x = (node - &maze[0][0]) / 8 - 1;
+	int y = (node - &maze[0][0]) % 8 - 1;
+	path[x][y] = node->priority;
 	}
 	printf("path found:\n");
 	for (int i = 5; i >= 0; i--){
-		for (int j = 0; j < 6; j++){
-			printf("%d ",path[i][j]);
-		}
-		printf("\n");
+	for (int j = 0; j < 6; j++){
+	printf("%d ",path[i][j]);
+	}
+	printf("\n");
 	}
 	printf("################################\n");*/
 
@@ -242,7 +246,7 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 		ReturnFirstStep(currentDir,posx,posy,aimx,aimy,&decision);
 	}
 	else if (mode == PERSONMODE){
-		MakeDecision(currentDir,posx,posy,aimx,aimy,&decision);
+		MakeDecision(currentDir,posx,posy,aimx,aimy,&decision,straightforward);
 	}
 	else return 255;
 
@@ -313,7 +317,7 @@ void ReturnFirstStep(char currentDir, char posx, char posy, char aimx, char aimy
 }
 
 //决定平移转向
-void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, unsigned char* dec){
+void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, unsigned char* dec, char* straightforward){
 	unsigned char decision;
 	//还原路径
 	char pathx[21] = {0};
@@ -329,26 +333,41 @@ void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, 
 	char goRIGHT = TURNRIGHT;
 	char goBACK = TURNBACK;
 
+	//找到下一个拐点
+	int turnindex = 0;
+	for (int i = total_point - 1; i >= 0; i--){
+		if (pathx[i - 2] - pathx[i - 1] != pathx[i - 1] - pathx[i] 
+		|| pathy[i - 2] - pathy[i - 1] != pathy[i - 1] - pathy[i]){
+			turnindex = i - 1;
+			break;
+		}
+	}
+	//当路径上的下一个点墙壁信息已知且不是拐点
+	if (turnindex != total_point - 2 
+		&& maze[pathy[total_point - 2]][pathx[total_point - 2]].wallcomplete == 1){
+		*straightforward = 1;
+	}
+	else{
+		*straightforward = 0;
+	}
+
 	if (total_point <= 3){//目的地与起点之间距离<=2时直接平移
 		goBACK = DIRECTBACK;
 		goLEFT = DIRECTLEFT;
 		goRIGHT = DIRECTRIGHT;
 	}
 	else{
-		//找到下一个拐点
-		int turnindex = 0;
-		for (int i = total_point - 1; i >= 0; i--){
-			if (pathx[i - 2] - pathx[i - 1] != pathx[i - 1] - pathx[i] 
-			|| pathy[i - 2] - pathy[i - 1] != pathy[i - 1] - pathy[i]){
-				turnindex = i - 1;
-				break;
-			}
-		}
-		//两格内转向且下一次转向方向与现在相同时才平移
-		if (total_point - turnindex <= 3){
+		//三格内平移
+		if (total_point - turnindex <= 4){
 			goBACK = DIRECTBACK;
+			goLEFT = DIRECTLEFT;
+			goRIGHT = DIRECTRIGHT;
+		}
+		/*//两格内转向且下一次转向方向与现在相同时才平移
+		if (total_point - turnindex <= 3){
+			//goBACK = DIRECTBACK;
 			char nextDir = 0;
-			if (pathx[total_point - 1] - pathx[total_point - 1] == 1) nextDir = RIGHT;
+			if (pathx[turnindex - 1] - pathx[turnindex] == 1) nextDir = RIGHT;
 			else if (pathx[turnindex - 1] - pathx[turnindex] == -1) nextDir = LEFT;
 			else if (pathy[turnindex - 1] - pathy[turnindex] == 1) nextDir = UP;
 			else if (pathy[turnindex - 1] - pathy[turnindex] == -1) nextDir = DOWN;
@@ -357,8 +376,14 @@ void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, 
 				goLEFT = DIRECTLEFT;
 				goRIGHT = DIRECTRIGHT;
 			}
-		}
+		}*/
 	}
+
+#if STABLE == 1
+	goLEFT = TURNLEFT;
+	goRIGHT = TURNRIGHT;
+	goBACK = TURNBACK;
+#endif
 
 	if (pathx[total_point - 2] - pathx[total_point - 1] == 1){//right
 		switch (currentDir){
@@ -405,21 +430,31 @@ void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, 
 
 unsigned char PathFinding(char currentDir, char posx, char posy, char aimx, char aimy, char wallrefresh){
 	int pri = 0;
-	unsigned char decision = MakePath(currentDir,posx,posy,aimx,aimy,wallrefresh,&pri,BALLMODE);
+	char useless;
+	unsigned char decision = MakePath(currentDir,posx,posy,aimx,aimy,wallrefresh,&pri,BALLMODE,&useless);
 	return decision;
 }
 
-unsigned char PersonFinding (char currentDir, char posx, char posy, char p1bx, char p1by, char p2bx, char p2by, char wallrefresh){
+unsigned char PersonFinding (char currentDir, char posx, char posy, char p1bx, char p1by, char p2bx, char p2by, char wallrefresh, char* straightforward){
 	unsigned char decision1 = 255, decision2 = 255;
+	char straight1 = 0, straight2 = 0;
 	int pri_1 = INF_MAX, pri_2 = INF_MAX;
-	decision1 = MakePath(currentDir,posx,posy,p1bx,p1by,wallrefresh,&pri_1,PERSONMODE);
-	decision2 = MakePath(currentDir,posx,posy,p2bx,p2by,wallrefresh,&pri_2,PERSONMODE);
+	decision1 = MakePath(currentDir,posx,posy,p1bx,p1by,wallrefresh,&pri_1,PERSONMODE,&straight1);
+	decision2 = MakePath(currentDir,posx,posy,p2bx,p2by,wallrefresh,&pri_2,PERSONMODE,&straight2);
 
+	//printf("****straightforward: %d\n",(int)straight1);
 	/*printf("pri compare:%d %d ——",pri_1,pri_2);
 	if (pri_1 < pri_2) printf("1\n");
 	else printf("2\n");*/
 
-	return (pri_1 < pri_2) ? decision1 : decision2;
+	if (pri_1 < pri_2){
+		*straightforward = straight1;
+		return decision1;
+	}
+	else{
+		*straightforward = straight2;
+		return decision2;
+	}
 }
 
 /*int main(void){
@@ -427,9 +462,11 @@ unsigned char PersonFinding (char currentDir, char posx, char posy, char p1bx, c
 
 	//AddWall(1,3,UP);
 	//PathFinding(RIGHT,1,5,5,1,0);
-	PersonFinding(DOWN,1,1,1,2,1,2,0);
+	char straight = 0;
+	PersonFinding(DOWN,1,2,1,3,1,3,0,&straight);
+	PersonFinding(DOWN,1,3,1,1,1,1,0,&straight);
 
-	//print wall conditioxxxxxxxxxxn
+	//print wall condition
 	printf("wall condition:\n");
 	for (int i = 7; i >= 0; i--){
 		for (int j = 0; j < 8; j++){
