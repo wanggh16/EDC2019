@@ -118,7 +118,7 @@ I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h)(0x5DDD1384)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_dma.h)(0x5DDD1384)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_exti.h)(0x5DDD1384)
 I (../Inc/motor.h)(0x5C3F4314)
-I (../Inc/config.h)(0x5DEA4F28)
+I (../Inc/config.h)(0x5DEAFD6A)
 F (..\Src\servo.c)(0x5DE8A0BC)(--c99 -c --cpu Cortex-M3 -D__EVAL -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_mecarun_v2_f103-I"C:\Program Files\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"C:\Program Files\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F10X_HD -DUSE_HAL_DRIVER -DSTM32F103xE -DUSE_FULL_LL_DRIVER-o mecarun_v2_f103\servo.o --omf_browse mecarun_v2_f103\servo.crf --depend mecarun_v2_f103\servo.d)
 I (../Inc/main.h)(0x5DE8BB68)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h)(0x5DDD1383)
@@ -196,14 +196,14 @@ I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_pwr.h)(0x5DDD1384)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h)(0x5DDD1384)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_dma.h)(0x5DDD1384)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_exti.h)(0x5DDD1384)
-I (../Inc/config.h)(0x5DEA4F28)
+I (../Inc/config.h)(0x5DEAFD6A)
 I (../Inc/motor.h)(0x5C3F4314)
 I (../Inc/servo.h)(0x5DA461AA)
 I (../Inc/bluetooth.h)(0x5DE8A0B7)
 I (C:\Program Files\ARM\ARMCC\include\stdio.h)(0x57F606B8)
 F (..\Src\maze_pathfinding.c)(0x5DEA5187)(--c99 -c --cpu Cortex-M3 -D__EVAL -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_mecarun_v2_f103-I"C:\Program Files\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"C:\Program Files\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F10X_HD -DUSE_HAL_DRIVER -DSTM32F103xE -DUSE_FULL_LL_DRIVER-o mecarun_v2_f103\maze_pathfinding.o --omf_browse mecarun_v2_f103\maze_pathfinding.crf --depend mecarun_v2_f103\maze_pathfinding.d)
 I (../Inc/maze_pathfinding.h)(0x5DE93266)
-F (../Src/main.c)(0x5DEA5C33)(--c99 -c --cpu Cortex-M3 -D__EVAL -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_mecarun_v2_f103-I"C:\Program Files\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"C:\Program Files\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F10X_HD -DUSE_HAL_DRIVER -DSTM32F103xE -DUSE_FULL_LL_DRIVER-o mecarun_v2_f103\main.o --omf_browse mecarun_v2_f103\main.crf --depend mecarun_v2_f103\main.d)
+F (../Src/main.c)(0x5DEB0ED3)(--c99 -c --cpu Cortex-M3 -D__EVAL -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_mecarun_v2_f103-I"C:\Program Files\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"C:\Program Files\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F10X_HD -DUSE_HAL_DRIVER -DSTM32F103xE -DUSE_FULL_LL_DRIVER-o mecarun_v2_f103\main.o --omf_browse mecarun_v2_f103\main.crf --depend mecarun_v2_f103\main.d)
 I (../Inc/main.h)(0x5DE8BB68)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h)(0x5DDD1383)
 I (../Inc/stm32f1xx_hal_conf.h)(0x5DE8BB68)
@@ -246,7 +246,7 @@ I (../Inc/motor.h)(0x5C3F4314)
 I (../Inc/mecanum.h)(0x5BEEE226)
 I (../Inc/bluetooth.h)(0x5DE8A0B7)
 I (../Inc/servo.h)(0x5DA461AA)
-I (../Inc/config.h)(0x5DEA4F28)
+I (../Inc/config.h)(0x5DEAFD6A)
 I (C:\Program Files\ARM\ARMCC\include\math.h)(0x57F606B6)
 I (../Inc/maze_pathfinding.h)(0x5DE93266)
 I (C:\Program Files\ARM\ARMCC\include\stdio.h)(0x57F606B8)

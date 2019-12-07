@@ -145,8 +145,12 @@ static void uDelay(uint32_t t)
 void clear_all_irs(){find_left = 0;find_right = 0;find_left_f = 0;find_right_f = 0;find_left_b = 0;find_right_b = 0;find_front = 0;find_back = 0;}
 void clear_all_irs_except_fb(){find_left = 0;find_right = 0;find_left_f = 0;find_right_f = 0;find_left_b = 0;find_right_b = 0;}
 void clear_all_irs_except_lr(){find_left_f = 0;find_right_f = 0;find_left_b = 0;find_right_b = 0;find_front = 0;find_back = 0;}
-void clear_fb(){find_front = 0;find_back = 0;}
-void clear_lr(){find_left = 0;find_right = 0;}
+//void clear_all_irs_except_f(){find_left = 0;find_right = 0;find_left_b = 0;find_right_b = 0;find_front = 0;find_back = 0;}
+//void clear_all_irs_except_b(){find_left = 0;find_right = 0;find_left_f = 0;find_right_f = 0;find_front = 0;find_back = 0;}
+//void clear_all_irs_except_l(){find_left = 0;find_right = 0;find_right_f = 0;find_right_b = 0;find_front = 0;find_back = 0;}
+//void clear_all_irs_except_r(){find_left = 0;find_right = 0;find_left_f = 0;find_left_b = 0;find_front = 0;find_back = 0;}
+//void clear_fb(){find_front = 0;find_back = 0;}
+//void clear_lr(){find_left = 0;find_right = 0;}
 //计算角度差，范围-1799~1800
 int16_t diffyaw(int16_t yawp,int16_t yawn)
 {
@@ -274,23 +278,21 @@ int main(void)
 	#define SPEED_TURN 1200
 	#define SPEED_TURN_SLOW 500
 	#define SPEED_LR 1000
-	#define SPEED_LR_SLOW 250
+	#define SPEED_LR_SLOW 300
 	#define SPEED_BACK 1300
 	#define SPEED_BACK_SLOW 300
-	#define KP_X 5                                                          
-	#define KP_R 2
+	#define KP_X 4                                                         
 	#define KP_X1 5                                                          
-	#define KP_R1 3
 	#define KP_YAW 2.5
 	#define KD_YAW 6
 	#define YAW_PERMIT 120
 	#define TURN_SLOW_YAW 500
 	#define TURN_STOP_YAW 800
-	#define SPEED_CORR 1000
+	#define SPEED_CORR 900
 	
 	//外面没有动态规划，可以写死
 	#if BALLMODE == 1
-	uint16_t target_list [20][2] = {{44, 21}, {44, 40}, {22, 56}, {24, 244}, {18, 257}, {20, 192}, {40, 190}, {228, 42}, {228, 19}, {48, 18}, {24, 18}, {15, 18}};
+	uint16_t target_list [20][2] = {{42, 18}, {44, 38}, {22, 52}, {24, 244}, {19, 260}, {20, 192}, {38, 190}, {234, 39}, {234, 19}, {48, 18}, {24, 18}, {15, 18}};
 	#else
 	//uint16_t target_list [20][2] = {{257, 237},{240, 235},{227, 258},{93, 260},{93, 240}};
 	uint16_t target_list [20][2] = {{262, 237},{240, 235},{240, 104},{230, 103}};
@@ -317,15 +319,17 @@ int main(void)
 	//连续看到横线次数
 	unsigned char continous = 0;
 	char slowdown = 0;
+	char preslowdown = 0;
 	int8_t rand = 0;
 	char noslowdown = 0;
 	char stopped = 0;
 	//出迷宫
 	char arrived = 0;
 	int anti = 0;
+	int anti1 = 0;
 	
 	#if CVDEBUG == 1
-	char states[] = {CV_FORWARD, CV_FORWARD, CV_LEFT, CV_LEFT, CV_BACK, CV_BACK, CV_RIGHT, CV_RIGHT};
+	char states[] = {CV_FORWARD, CV_LEFT, CV_BACK, CV_RIGHT, CV_LEFT, CV_RIGHT, CV_FORWARD, CV_BACK, CV_TURNLEFT, CV_TURNRIGHT, CV_TURNBACK, CV_LEFT, CV_TURNBACK, CV_BACK};
 	char statedebug = 1;
 	#endif
   /* USER CODE END 2 */
@@ -343,6 +347,9 @@ int main(void)
 		data_task(&info);
 		if (HAL_GetTick() >= time_print && move_en != 1)
 		{
+			#if CVDEBUG == 1
+			printf("debugstage:%d\n", statedebug);
+			#endif
 			printf("mode:%d\n", BALLMODE);
 			printf("state:%d %d %d\n",info.renewed,move_en,state);
 			//printf("1X:%d,1Y:%d\n",info.P1BX,info.P1BY);
@@ -364,7 +371,8 @@ int main(void)
 		if(info.renewed && move_en == 1)
 		{
 			#if CVDEBUG == 1
-			if (statedebug > 7) statedebug = 0;
+			if (statedebug > 14) statedebug = 1;
+			//printf("%d ",state);
 			#endif
 			yaw_diff = diffyaw(yaw_last, info.yaw);
 			yaw_last = info.yaw;
@@ -390,6 +398,7 @@ int main(void)
 					state = CV_FORWARD;
 					clear_all_irs();
 					dir = RIGHT;
+					printf("only once\n");
 					#endif
 				break;
 				//有上位机，转向，准备前往下一点
@@ -444,22 +453,22 @@ int main(void)
 						stage++;
 						//倒车去小球位置，放钓鱼竿
 						//if (TARGETX==10 && TARGETY==194)
-						if (TARGETX==44 && TARGETY==40)
+						if (TARGETX==44 && TARGETY==38)
 						{
 							reverse = 1;
 						}
-						else if (TARGETX==22 && TARGETY==56)
+						else if (TARGETX==22 && TARGETY==52)
 						{
 							Set_Servo(4,1400);
 						}
 						//抓完球恢复正着走，收钓鱼竿
-						else if (TARGETX==18 && TARGETY==257)
+						else if (TARGETX==19 && TARGETY==260)
 						{
 							reverse = 0;
 							Set_Servo(4,1000);
 						}
 						//进迷宫
-						else if (TARGETX==40 && TARGETY==190)
+						else if (TARGETX==38 && TARGETY==190)
 						{
 							state = CV_FORWARD;
 							dir = RIGHT;
@@ -467,6 +476,7 @@ int main(void)
 							big_y = 4;
 							ClearWalls();
 							clear_all_irs();
+							preslowdown = 1;
 						}
 						else if (TARGETX==93 && TARGETY==240)
 						{
@@ -476,6 +486,7 @@ int main(void)
 							big_y = 6;
 							ClearWalls();
 							clear_all_irs();
+							preslowdown = 1;
 						}
 						else if (TARGETX==230 && TARGETY==103)
 						{
@@ -485,8 +496,9 @@ int main(void)
 							big_y = 1;
 							ClearWalls();
 							clear_all_irs();
+							preslowdown = 1;
 						}
-						else if (TARGETX==228 && TARGETY==19)
+						else if (TARGETX==234 && TARGETY==19)
 						{
 							reverse = 1;
 							Set_Servo(4,1000);
@@ -508,7 +520,7 @@ int main(void)
 				break;
 				//正常视觉巡线
 				case CV_FORWARD:
-					if ((!stopped) && -45 < info.cvxpos && info.cvxpos < 45 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT)
+					if ((!stopped) && -40 < info.cvxpos && info.cvxpos < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT)
 					{
 						speed_xyr.y = SPEED_FORWARD;
 						continous++;
@@ -525,9 +537,16 @@ int main(void)
 					}
 					//speed_xyr.x = KP_X*info.cvxpos;
 					//speed_xyr.r = KP_R*info.cvangle;
+					if (anti1 > 0){speed_xyr.x = SPEED_CORR;anti1--;}
+					else if (anti1 < 0){speed_xyr.x = -SPEED_CORR;anti1++;}
 					
-					if (continous == 7 && (!(HAL_GPIO_ReadPin(GPIOC,ir_left) && HAL_GPIO_ReadPin(GPIOC,ir_right)))) clear_lr();
-					if ((find_left_f && find_right_f && continous > 6) || continous > 100)
+					if ((find_left_b && find_right_b) && (!preslowdown))
+					{
+						preslowdown = 1;
+						//clear_all_irs_except_f();
+						clear_all_irs();
+					}
+					if ((find_left_f && find_right_f && preslowdown) || continous > 75)
 					{
 						continous = 0;
 						clear_all_irs_except_lr();
@@ -599,9 +618,10 @@ int main(void)
 					//speed_xyr.x = KP_X*info.cvxpos;
 					//speed_xyr.r = KP_R*info.cvangle;
 					
-					if ((find_left && find_right) || (find_left_b && find_right_b) || continous > 100)
+					if ((find_left && find_right) || (find_left_b && find_right_b) || continous > 75)
 					{
 						clear_all_irs();
+						preslowdown = 0;
 						continous = 0;
 						speed_xyr.x = 0;
 						speed_xyr.y = 0;
@@ -612,7 +632,7 @@ int main(void)
 						else if (state == CV_TURNLEFT || state == CV_TURNRIGHT || state == CV_TURNBACK) speed_xyr.y = 0;
 						else {
 							speed_xyr.y = -SPEED_CORR;
-							anti = 4;
+							anti = 1;
 						}
 					}
 				break;
@@ -625,12 +645,32 @@ int main(void)
 					{
 						speed_xyr.r = 0;
 						dir++;
-						if (arrived) state = BLIND_FORWARD;
-						else state = CV_FORWARD;
 						clear_all_irs();
-						#if CVDEBUG==1
-						state = states[statedebug];
-						statedebug++;
+						preslowdown = 0;
+						slowdown = 0;
+						if (arrived) {state = BLIND_FORWARD;break;}
+						else state = CV_FORWARD;
+						#if BALLMODE == 2
+						if (dir > 4) dir -= 4;
+						else if (dir < 1) dir += 4;
+						//迷宫寻路
+						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
+						char rightblock = !(HAL_GPIO_ReadPin(GPIOB,IR_RIGHT_B));;
+						char frontblock = !HAL_GPIO_ReadPin(GPIOC,IR_FRONT);
+						char backblock = !HAL_GPIO_ReadPin(GPIOC,IR_BACK);
+						char wallrefresh = (backblock << 3) + (leftblock << 2) + (frontblock << 1) + rightblock;
+						
+						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
+						if (decision == 255)
+						{
+							ClearWalls();
+							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
+						}
+						state = decision;
+						if (state == CV_LEFT) speed_xyr.x = -SPEED_LR;
+						else if (state == CV_RIGHT) speed_xyr.x = SPEED_LR;
+						else if (state == CV_FORWARD) speed_xyr.y = SPEED_FORWARD;
+						else if (state == CV_BACK) speed_xyr.x = -SPEED_BACK;
 						#endif
 					}
 				break;
@@ -643,12 +683,32 @@ int main(void)
 					{
 						speed_xyr.r = 0;
 						dir--;
-						if (arrived) state = BLIND_FORWARD;
-						else state = CV_FORWARD;
 						clear_all_irs();
-						#if CVDEBUG==1
-						state = states[statedebug];
-						statedebug++;
+						preslowdown = 0;
+						slowdown = 0;
+						if (arrived) {state = BLIND_FORWARD;break;}
+						else state = CV_FORWARD;
+						#if BALLMODE == 2
+						if (dir > 4) dir -= 4;
+						else if (dir < 1) dir += 4;
+						//迷宫寻路
+						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
+						char rightblock = !(HAL_GPIO_ReadPin(GPIOB,IR_RIGHT_B));;
+						char frontblock = !HAL_GPIO_ReadPin(GPIOC,IR_FRONT);
+						char backblock = !HAL_GPIO_ReadPin(GPIOC,IR_BACK);
+						char wallrefresh = (backblock << 3) + (leftblock << 2) + (frontblock << 1) + rightblock;
+						
+						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
+						if (decision == 255)
+						{
+							ClearWalls();
+							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
+						}
+						state = decision;
+						if (state == CV_LEFT) speed_xyr.x = -SPEED_LR;
+						else if (state == CV_RIGHT) speed_xyr.x = SPEED_LR;
+						else if (state == CV_FORWARD) speed_xyr.y = SPEED_FORWARD;
+						else if (state == CV_BACK) speed_xyr.x = -SPEED_BACK;
 						#endif
 					}
 				break;
@@ -661,25 +721,51 @@ int main(void)
 					{
 						speed_xyr.r = 0;
 						dir += 2;
-						if (arrived) state = BLIND_FORWARD;
-						else state = CV_FORWARD;
 						clear_all_irs();
-						#if CVDEBUG==1
-						state = states[statedebug];
-						statedebug++;
+						preslowdown = 0;
+						slowdown = 0;
+						if (arrived) {state = BLIND_FORWARD;break;}
+						else state = CV_FORWARD;
+						#if BALLMODE == 2
+						if (dir > 4) dir -= 4;
+						else if (dir < 1) dir += 4;
+						//迷宫寻路
+						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
+						char rightblock = !(HAL_GPIO_ReadPin(GPIOB,IR_RIGHT_B));;
+						char frontblock = !HAL_GPIO_ReadPin(GPIOC,IR_FRONT);
+						char backblock = !HAL_GPIO_ReadPin(GPIOC,IR_BACK);
+						char wallrefresh = (backblock << 3) + (leftblock << 2) + (frontblock << 1) + rightblock;
+						
+						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
+						if (decision == 255)
+						{
+							ClearWalls();
+							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
+						}
+						state = decision;
+						if (state == CV_LEFT) speed_xyr.x = -SPEED_LR;
+						else if (state == CV_RIGHT) speed_xyr.x = SPEED_LR;
+						else if (state == CV_FORWARD) speed_xyr.y = SPEED_FORWARD;
+						else if (state == CV_BACK) speed_xyr.x = -SPEED_BACK;
 						#endif
 					}
 				break;
 				//左平移
 				case CV_LEFT:
-					if (find_left_f && find_left_b && (!slowdown) && continous > 8)
+					if (find_right_f && find_right_b && (!preslowdown))
+					{
+						preslowdown = 1;
+						//clear_all_irs_except_l();
+						clear_all_irs();
+					}
+					if (find_left_f && find_left_b && preslowdown && (!slowdown))
 					{
 						slowdown = 1;
 						clear_all_irs_except_fb();
 					}
-					if ((!stopped) && -35 < info.cvxpos1 && info.cvxpos1 < 35 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
+					if ((!stopped) && -40 < info.cvxpos1 && info.cvxpos1 < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
 					{
-						if (slowdown/* && (!noslowdown)*/) {speed_xyr.x = -SPEED_LR_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
+						if (slowdown && (!noslowdown)) {speed_xyr.x = -SPEED_LR_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
 						else {speed_xyr.x = -SPEED_LR;continous++;}
 						speed_xyr.y = KP_X*info.cvxpos1;
 						//speed_xyr.r = KP_R*info.cvangle1 + KD_YAW*yaw_diff;
@@ -697,13 +783,12 @@ int main(void)
 					if (anti > 0){speed_xyr.y = -SPEED_CORR;anti--;}
 					else if (anti < 0){speed_xyr.y = SPEED_CORR;anti++;}
 					
-					if (continous == 9 && (!(HAL_GPIO_ReadPin(GPIOB,ir_front) && HAL_GPIO_ReadPin(GPIOB,ir_back)))) clear_fb();
-					
-					if ((slowdown && ((find_front && find_back) || (find_right_f && find_right_b)) && continous > 8) || continous > 150)
+					if ((slowdown && ((find_front && find_back) || (find_right_f && find_right_b))) || continous > 100)
 					{
 						rand = 0;
 						clear_all_irs();
 						slowdown = 0;
+						preslowdown = 0;
 						continous = 0;
 						speed_xyr.x = 0;
 						speed_xyr.y = 0;
@@ -737,19 +822,28 @@ int main(void)
 						//if (noslowdown) continous = 1;
 						if (state == CV_LEFT) speed_xyr.x = -SPEED_LR;
 						else if (state == CV_TURNLEFT || state == CV_TURNRIGHT || state == CV_TURNBACK) speed_xyr.x = 0;
-						else speed_xyr.x = SPEED_LR_SLOW;
+						else {
+							speed_xyr.x = SPEED_CORR;
+							anti1 = 1;
+						}
 					}
 				break;
 				//右平移
 				case CV_RIGHT:
-					if (find_right_f && find_right_b && (!slowdown) && continous > 8)
+					if (find_left_f && find_left_b && (!preslowdown))
+					{
+						preslowdown = 1;
+						//clear_all_irs_except_r();
+						clear_all_irs();
+					}
+					if (find_right_f && find_right_b && preslowdown && (!slowdown))
 					{
 						slowdown = 1;
 						clear_all_irs_except_fb();
 					}
-					if ((!stopped) && -35 < info.cvxpos1 && info.cvxpos1 < 35 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
+					if ((!stopped) && -40 < info.cvxpos1 && info.cvxpos1 < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
 					{
-						if (slowdown/* && (!noslowdown)*/) {speed_xyr.x = SPEED_LR_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
+						if (slowdown && (!noslowdown)) {speed_xyr.x = SPEED_LR_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
 						else {speed_xyr.x = SPEED_LR;continous++;}
 						speed_xyr.y = KP_X*info.cvxpos1;
 						//speed_xyr.r = KP_R*info.cvangle1 + KD_YAW*yaw_diff;
@@ -767,13 +861,12 @@ int main(void)
 					if (anti > 0){speed_xyr.y = -SPEED_CORR;anti--;}
 					else if (anti < 0){speed_xyr.y = SPEED_CORR;anti++;}
 					
-					if (continous == 9 && (!(HAL_GPIO_ReadPin(GPIOB,ir_front) && HAL_GPIO_ReadPin(GPIOB,ir_back)))) clear_fb();
-					
-					if ((slowdown && ((find_front && find_back) || (find_left_f && find_left_b)) && continous > 8) || continous > 150)
+					if ((slowdown && ((find_front && find_back) || (find_left_f && find_left_b))) || continous > 100)
 					{
 						rand = 0;
 						clear_all_irs();
 						slowdown = 0;
+						preslowdown = 0;
 						continous = 0;
 						speed_xyr.x = 0;
 						speed_xyr.y = 0;
@@ -807,18 +900,30 @@ int main(void)
 						//if (noslowdown) continous = 1;
 						if (state == CV_RIGHT) speed_xyr.x = SPEED_LR;
 						else if (state == CV_TURNLEFT || state == CV_TURNRIGHT || state == CV_TURNBACK) speed_xyr.x = 0;
-						else speed_xyr.x = -SPEED_LR_SLOW;
+						else {
+							speed_xyr.x = -SPEED_CORR;
+							anti1 = -1;
+						}
 					}
 				break;
 				//倒车
 				case CV_BACK:
-					if (find_left_b && find_right_b && (!slowdown) && continous > 6)
+					if (find_left_f && find_right_f && (!preslowdown))
+					{
+						preslowdown = 1;
+						//clear_all_irs_except_b();
+						clear_all_irs();
+					}
+					if (find_left_b && find_right_b && preslowdown && (!slowdown))
 					{
 						slowdown = 1;
 						clear_all_irs_except_lr();
 					}
-					if ((!stopped) && -45 < info.cvxpos && info.cvxpos < 45 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
+					if ((!stopped) && -40 < info.cvxpos && info.cvxpos < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
 					{
+						#if CVDEBUG == 1
+						noslowdown = 0;
+						#endif
 						if (slowdown && (!noslowdown)) {speed_xyr.y = -SPEED_BACK_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
 						else {speed_xyr.y = -SPEED_BACK;continous++;}
 						speed_xyr.x = KP_X*info.cvxpos;
@@ -835,14 +940,13 @@ int main(void)
 					//speed_xyr.x = KP_X*info.cvxpos;
 					//speed_xyr.r = KP_R*info.cvangle;
 					
-					if (continous == 7 && (!(HAL_GPIO_ReadPin(GPIOC,ir_left) && HAL_GPIO_ReadPin(GPIOC,ir_right)))) clear_lr();
-					
-					if ((slowdown && ((find_left && find_right) || (find_left_f && find_right_f)) && continous > 6) || continous > 150)
+					if ((slowdown && ((find_left && find_right) || (find_left_f && find_right_f))) || continous > 100)
 					{
 						clear_all_irs();
 						rand = 0;
 						continous = 0;
 						slowdown = 0;
+						preslowdown = 0;
 						speed_xyr.x = 0;
 						speed_xyr.y = 0;
 						speed_xyr.r = 0;
@@ -876,13 +980,13 @@ int main(void)
 						else if (state == CV_TURNLEFT || state == CV_TURNRIGHT || state == CV_TURNBACK) speed_xyr.y = 0;
 						else {
 							speed_xyr.y = SPEED_CORR;
-							anti = -8;
+							anti = -3;
 						}
 					}
 				break;
 				//冲出迷宫的最后一步
 				case BLIND_FORWARD:
-					if (-50 < info.cvxpos && info.cvxpos < 50 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) {speed_xyr.y = SPEED_FORWARD;continous++;}
+					if (-40 < info.cvxpos && info.cvxpos < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) {speed_xyr.y = SPEED_FORWARD;continous++;}
 					else speed_xyr.y = 0;
 					speed_xyr.x = KP_X*info.cvxpos;
 					speed_xyr.r = KP_YAW*yaw_err + KD_YAW*yaw_diff;
@@ -1554,14 +1658,14 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  if (GPIO_Pin == ir_left && (state == CV_STOPSOON || state == CV_BACK )) find_left = 1;
-	else if (GPIO_Pin == ir_right && (state == CV_STOPSOON || state == CV_BACK)) find_right = 1;
-	else if (GPIO_Pin == ir_front && (state == CV_LEFT || state == CV_RIGHT)) find_front = 1;
-	else if (GPIO_Pin == ir_back && (state == CV_LEFT || state == CV_RIGHT)) find_back = 1;
-	else if (GPIO_Pin == ir_left_f && (state == CV_LEFT || state == CV_FORWARD)) find_left_f = 1;
-	else if (GPIO_Pin == ir_left_b && (state == CV_LEFT || state == CV_BACK)) find_left_b = 1;
-	else if (GPIO_Pin == ir_right_f && (state == CV_RIGHT || state == CV_FORWARD)) find_right_f = 1;
-	else if (GPIO_Pin == ir_right_b && (state == CV_RIGHT || state == CV_BACK)) find_right_b = 1;
+  if (GPIO_Pin == ir_left) find_left = 1;
+	else if (GPIO_Pin == ir_right) find_right = 1;
+	else if (GPIO_Pin == ir_front) find_front = 1;
+	else if (GPIO_Pin == ir_back) find_back = 1;
+	else if (GPIO_Pin == ir_left_f) find_left_f = 1;
+	else if (GPIO_Pin == ir_left_b) find_left_b = 1;
+	else if (GPIO_Pin == ir_right_f) find_right_f = 1;
+	else if (GPIO_Pin == ir_right_b) find_right_b = 1;
 }
 /* USER CODE END 4 */
 
