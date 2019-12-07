@@ -289,6 +289,7 @@ int main(void)
 	#define TURN_SLOW_YAW 500
 	#define TURN_STOP_YAW 800
 	#define SPEED_CORR 900
+	#define SPEED_FORWARD_BALL 800
 	
 	//外面没有动态规划，可以写死
 	#if BALLMODE == 1
@@ -374,6 +375,7 @@ int main(void)
 			if (statedebug > 14) statedebug = 1;
 			//printf("%d ",state);
 			#endif
+			//printf("%d ",state);
 			yaw_diff = diffyaw(yaw_last, info.yaw);
 			yaw_last = info.yaw;
 			if (dir == UP) yaw_err = diffyaw(900, info.yaw);
@@ -522,7 +524,11 @@ int main(void)
 				case CV_FORWARD:
 					if ((!stopped) && -40 < info.cvxpos && info.cvxpos < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT)
 					{
+						#if BALLMODE == 1
+						speed_xyr.y = SPEED_FORWARD_BALL;
+						#else
 						speed_xyr.y = SPEED_FORWARD;
+						#endif
 						continous++;
 						speed_xyr.x = KP_X*info.cvxpos;
 						//speed_xyr.r = KP_R*info.cvangle + KD_YAW*yaw_diff;
@@ -546,7 +552,7 @@ int main(void)
 						//clear_all_irs_except_f();
 						clear_all_irs();
 					}
-					if ((find_left_f && find_right_f && preslowdown) || continous > 75)
+					if ((find_left_f && find_right_f && preslowdown) || continous > 100)
 					{
 						continous = 0;
 						clear_all_irs_except_lr();
@@ -618,7 +624,7 @@ int main(void)
 					//speed_xyr.x = KP_X*info.cvxpos;
 					//speed_xyr.r = KP_R*info.cvangle;
 					
-					if ((find_left && find_right) || (find_left_b && find_right_b) || continous > 75)
+					if ((find_left && find_right) || (find_left_b && find_right_b) || continous > 100)
 					{
 						clear_all_irs();
 						preslowdown = 0;
@@ -650,28 +656,6 @@ int main(void)
 						slowdown = 0;
 						if (arrived) {state = BLIND_FORWARD;break;}
 						else state = CV_FORWARD;
-						#if BALLMODE == 2
-						if (dir > 4) dir -= 4;
-						else if (dir < 1) dir += 4;
-						//迷宫寻路
-						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
-						char rightblock = !(HAL_GPIO_ReadPin(GPIOB,IR_RIGHT_B));;
-						char frontblock = !HAL_GPIO_ReadPin(GPIOC,IR_FRONT);
-						char backblock = !HAL_GPIO_ReadPin(GPIOC,IR_BACK);
-						char wallrefresh = (backblock << 3) + (leftblock << 2) + (frontblock << 1) + rightblock;
-						
-						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
-						if (decision == 255)
-						{
-							ClearWalls();
-							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
-						}
-						state = decision;
-						if (state == CV_LEFT) speed_xyr.x = -SPEED_LR;
-						else if (state == CV_RIGHT) speed_xyr.x = SPEED_LR;
-						else if (state == CV_FORWARD) speed_xyr.y = SPEED_FORWARD;
-						else if (state == CV_BACK) speed_xyr.x = -SPEED_BACK;
-						#endif
 					}
 				break;
 				//右转
@@ -688,28 +672,6 @@ int main(void)
 						slowdown = 0;
 						if (arrived) {state = BLIND_FORWARD;break;}
 						else state = CV_FORWARD;
-						#if BALLMODE == 2
-						if (dir > 4) dir -= 4;
-						else if (dir < 1) dir += 4;
-						//迷宫寻路
-						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
-						char rightblock = !(HAL_GPIO_ReadPin(GPIOB,IR_RIGHT_B));;
-						char frontblock = !HAL_GPIO_ReadPin(GPIOC,IR_FRONT);
-						char backblock = !HAL_GPIO_ReadPin(GPIOC,IR_BACK);
-						char wallrefresh = (backblock << 3) + (leftblock << 2) + (frontblock << 1) + rightblock;
-						
-						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
-						if (decision == 255)
-						{
-							ClearWalls();
-							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
-						}
-						state = decision;
-						if (state == CV_LEFT) speed_xyr.x = -SPEED_LR;
-						else if (state == CV_RIGHT) speed_xyr.x = SPEED_LR;
-						else if (state == CV_FORWARD) speed_xyr.y = SPEED_FORWARD;
-						else if (state == CV_BACK) speed_xyr.x = -SPEED_BACK;
-						#endif
 					}
 				break;
 				//掉头
@@ -726,28 +688,6 @@ int main(void)
 						slowdown = 0;
 						if (arrived) {state = BLIND_FORWARD;break;}
 						else state = CV_FORWARD;
-						#if BALLMODE == 2
-						if (dir > 4) dir -= 4;
-						else if (dir < 1) dir += 4;
-						//迷宫寻路
-						char leftblock = !(HAL_GPIO_ReadPin(GPIOC,IR_LEFT_B));
-						char rightblock = !(HAL_GPIO_ReadPin(GPIOB,IR_RIGHT_B));;
-						char frontblock = !HAL_GPIO_ReadPin(GPIOC,IR_FRONT);
-						char backblock = !HAL_GPIO_ReadPin(GPIOC,IR_BACK);
-						char wallrefresh = (backblock << 3) + (leftblock << 2) + (frontblock << 1) + rightblock;
-						
-						uint8_t decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
-						if (decision == 255)
-						{
-							ClearWalls();
-							decision = PersonFinding(dir,big_x + 1,big_y + 1,info.P1BX + 1,info.P1BY + 1,info.P2BX + 1,info.P2BY + 1,wallrefresh,&noslowdown);
-						}
-						state = decision;
-						if (state == CV_LEFT) speed_xyr.x = -SPEED_LR;
-						else if (state == CV_RIGHT) speed_xyr.x = SPEED_LR;
-						else if (state == CV_FORWARD) speed_xyr.y = SPEED_FORWARD;
-						else if (state == CV_BACK) speed_xyr.x = -SPEED_BACK;
-						#endif
 					}
 				break;
 				//左平移
@@ -763,7 +703,7 @@ int main(void)
 						slowdown = 1;
 						clear_all_irs_except_fb();
 					}
-					if ((!stopped) && -40 < info.cvxpos1 && info.cvxpos1 < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
+					if ((!stopped) && -36 < info.cvxpos1 && info.cvxpos1 < 36 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
 					{
 						if (slowdown && (!noslowdown)) {speed_xyr.x = -SPEED_LR_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
 						else {speed_xyr.x = -SPEED_LR;continous++;}
@@ -841,7 +781,7 @@ int main(void)
 						slowdown = 1;
 						clear_all_irs_except_fb();
 					}
-					if ((!stopped) && -40 < info.cvxpos1 && info.cvxpos1 < 40 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
+					if ((!stopped) && -36 < info.cvxpos1 && info.cvxpos1 < 36 && -YAW_PERMIT < yaw_err && yaw_err < YAW_PERMIT) 
 					{
 						if (slowdown && (!noslowdown)) {speed_xyr.x = SPEED_LR_SLOW;if (rand == 2) {continous++;rand = 0;} else rand++;}
 						else {speed_xyr.x = SPEED_LR;continous++;}

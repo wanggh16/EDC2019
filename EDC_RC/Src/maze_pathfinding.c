@@ -160,36 +160,36 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 		int pathweight = INF_MAX;
 		//right
 		if ((selectednode -> wall & 8) != 0) pathweight = INF_MAX;
-		else if (dirjudge == 0 || dirjudge == 1) pathweight = 1;
-		else if (dirjudge == -1) pathweight = 3;
-		else  pathweight = 2;
+		else if (dirjudge == 0 || dirjudge == 1) pathweight = 3;
+		else if (dirjudge == -1) pathweight = 5;
+		else  pathweight = 5;
 		if (selectednode -> priority + pathweight < rightnode -> priority){
 			rightnode -> priority = selectednode -> priority + pathweight;
 			rightnode -> parent = selectednode;
 		}
 		//left
 		if ((selectednode -> wall & 2) != 0) pathweight = INF_MAX;
-		else if (dirjudge == 0 || dirjudge == -1) pathweight = 1;
-		else if (dirjudge == 1) pathweight = 3;
-		else  pathweight = 2;
+		else if (dirjudge == 0 || dirjudge == -1) pathweight = 3;
+		else if (dirjudge == 1) pathweight = 5;
+		else  pathweight = 5;
 		if (selectednode -> priority + pathweight < leftnode -> priority){
 			leftnode -> priority = selectednode -> priority + pathweight;
 			leftnode -> parent = selectednode;
 		}
 		//down
 		if ((selectednode -> wall & 4) != 0) pathweight = INF_MAX;
-		else if (dirjudge == 0 || dirjudge == -8) pathweight = 1;
-		else if (dirjudge == 8) pathweight = 3;
-		else  pathweight = 2;
+		else if (dirjudge == 0 || dirjudge == -8) pathweight = 3;
+		else if (dirjudge == 8) pathweight = 5;
+		else  pathweight = 5;
 		if (selectednode -> priority + pathweight < downnode -> priority){
 			downnode -> priority = selectednode -> priority + pathweight;
 			downnode -> parent = selectednode;
 		}
 		//up
 		if ((selectednode -> wall & 1) != 0) pathweight = INF_MAX;
-		else if (dirjudge == 0 || dirjudge == 8) pathweight = 1;
-		else if (dirjudge == -8) pathweight = 3;
-		else  pathweight = 2;
+		else if (dirjudge == 0 || dirjudge == 8) pathweight = 3;
+		else if (dirjudge == -8) pathweight = 5;
+		else  pathweight = 5;
 		if (selectednode -> priority + pathweight < upnode -> priority){
 			upnode -> priority = selectednode -> priority + pathweight;
 			upnode -> parent = selectednode;
@@ -198,24 +198,24 @@ unsigned char MakePath (char currentDir, char posx, char posy, char aimx, char a
 		if (dirjudge == 0){
 			switch(currentDir){
 			case UP:
-				downnode -> priority += 1;//2;
-				rightnode -> priority += 1;
-				leftnode -> priority += 1;
+				downnode -> priority += 2;//2;
+				rightnode -> priority += 2;
+				leftnode -> priority += 2;
 				break;
 			case DOWN:
-				upnode -> priority += 1;//2;
-				rightnode -> priority += 1;
-				leftnode -> priority += 1;
+				upnode -> priority += 2;//2;
+				rightnode -> priority += 2;
+				leftnode -> priority += 2;
 				break;
 			case LEFT:
-				rightnode -> priority += 1;//2;
-				upnode -> priority += 1;
-				downnode -> priority += 1;
+				rightnode -> priority += 2;//2;
+				upnode -> priority += 2;
+				downnode -> priority += 2;
 				break;
 			case RIGHT:
-				leftnode -> priority += 1;//2;
-				upnode -> priority += 1;
-				downnode -> priority += 1;
+				leftnode -> priority += 2;//2;
+				upnode -> priority += 2;
+				downnode -> priority += 2;
 				break;
 			default: break;
 			}
@@ -357,8 +357,13 @@ void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, 
 		goRIGHT = DIRECTRIGHT;
 	}
 	else{
-		//两格内转向且下一次转向方向与现在相同时才平移
-		if (total_point - turnindex <= 4) goBACK = DIRECTBACK;
+		//三格内平移
+		if (total_point - turnindex <= 4){
+			goBACK = DIRECTBACK;
+			goLEFT = DIRECTLEFT;
+			goRIGHT = DIRECTRIGHT;
+		}
+		/*//两格内转向且下一次转向方向与现在相同时才平移
 		if (total_point - turnindex <= 3){
 			//goBACK = DIRECTBACK;
 			char nextDir = 0;
@@ -371,7 +376,7 @@ void MakeDecision (char currentDir, char posx, char posy, char aimx, char aimy, 
 				goLEFT = DIRECTLEFT;
 				goRIGHT = DIRECTRIGHT;
 			}
-		}
+		}*/
 	}
 
 #if STABLE == 1
